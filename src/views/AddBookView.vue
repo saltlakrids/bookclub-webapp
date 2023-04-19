@@ -1,15 +1,15 @@
 <template>
-<PickBook />
+<AddBook />
 </template>
 
 <script>
 // @ is an alias to /src
-import PickBook from '@/components/PickBook.vue'
+import AddBook from '@/components/AddBook.vue'
 
 export default {
-  name: 'HomeView',
+  name: 'AddBookView',
   components: {
-    PickBook
+    AddBook
   }
 }
 </script>
