@@ -116,7 +116,7 @@ export default {
     padding: 10px 20px;
     border-radius: 8px;
     font-size: 18px;
-    animation: slideDown 3s 2 ease-out forwards;
+    animation: slideDown 3s 1 ease-out forwards;
   }
 
   @keyframes slideDown {
