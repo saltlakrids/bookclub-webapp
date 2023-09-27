@@ -21,23 +21,19 @@ import { collection, getDocs, doc, getDoc, deleteDoc } from "firebase/firestore"
 import { db } from '../firebase/init';
 
 
-// //  books
+
 const books = ref ([]);
 let isAuthenticated = false; 
 
 let booksv2 = [];
 
 
-// get books
-
-
 export default {
 
 setup(){
-     // Listen for changes in the authentication state
      const auth = getAuth();
     onAuthStateChanged(auth, (user) => {
-      isAuthenticated = !!user; // Set isAuthenticated to true if a user is signed in
+      isAuthenticated = !!user; 
     });
   onMounted(async () => {
   const querySnapshot = await getDocs(collection(db, "books"));
@@ -45,13 +41,13 @@ setup(){
   querySnapshot.forEach((doc) => {
     console.log(doc.id, " => ", doc.data());
     const book = {
-      id: doc.id, // Store the document ID
+      id: doc.id, 
       title: doc.data().title,
       pages: doc.data().pages,
       suggester: doc.data().suggester,
     };
     fbBooks.push(book);
-    booksv2.push(doc.id); // Store the document ID in booksv2
+    booksv2.push(doc.id);
   });
   books.value = fbBooks;
 });
@@ -85,23 +81,19 @@ setup(){
       return;
     }
     const randomIndex = Math.floor(Math.random() * size);
-    const selectedBookId = booksv2[randomIndex]; // Get the stored document ID
-    const selectedBookRef = doc(collection(db, "books"), selectedBookId); // Create the document reference
-    // Get the book data using the reference
+    const selectedBookId = booksv2[randomIndex]; 
+    const selectedBookRef = doc(collection(db, "books"), selectedBookId); 
     const bookSnapshot = await getDoc(selectedBookRef);
     const selectedBook = {
       id: bookSnapshot.id,
       title: bookSnapshot.data().title,
       pages: bookSnapshot.data().pages,
       suggester: bookSnapshot.data().suggester,
-      ref: selectedBookRef, // Store the reference
+      ref: selectedBookRef, 
     };
     console.log("Selected book reference:", selectedBook.ref);
 
-    // Update the selected book title
     this.book = selectedBook;
-    // Remove the book from the database
-    // Remove the book ID from your local array
     booksv2.splice(randomIndex, 1);
   } catch (error) {
     this.error = error.message;
@@ -125,18 +117,18 @@ async deleteBook() {
   this.isLoading = true;
   try {
     if (confirm("Are you sure?")) {
-      const selectedBook = this.book; // Get the currently selected book
+      const selectedBook = this.book; 
       console.log("Selected book:", selectedBook);
 
       if (selectedBook && selectedBook.ref) {
         console.log("Selected book reference:", selectedBook.ref);
 
-        // Use deleteDoc to delete the document
+       
         await deleteDoc(doc(db, "books", selectedBook.id));
         
         console.log("Book deleted");
-        this.book = null; // Clear the selected book
-        // You can also remove the deleted book ID from the local array if needed
+        this.book = null; 
+        
         const indexToDelete = booksv2.indexOf(selectedBook.id);
         if (indexToDelete !== -1) {
           booksv2.splice(indexToDelete, 1);

@@ -12,7 +12,6 @@ export default {
         const auth = getAuth();
         const provider = new GoogleAuthProvider();
         await signInWithRedirect(auth, provider);
-        // User will be redirected to Google Sign-In and back to your app
       } catch (error) {
         console.error('Google Sign-In Error:', error);
       }
