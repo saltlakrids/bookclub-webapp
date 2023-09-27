@@ -1,4 +1,5 @@
 <template>
+
 <PickBook />
 </template>
 
@@ -6,10 +7,13 @@
 // @ is an alias to /src
 import PickBook from '@/components/PickBook.vue'
 
+
+
 export default {
   name: 'HomeView',
   components: {
-    PickBook
-  }
+    PickBook,
+  
+}
 }
 </script>

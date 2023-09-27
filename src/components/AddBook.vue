@@ -18,12 +18,10 @@
 </template>
 
 <script>
+
 import { db } from '../firebase/init';
 import 'firebase/database';
-
 import { doc, setDoc } from "firebase/firestore"; 
-
-
 import { ref } from 'vue'
 const title = ref('')
 
