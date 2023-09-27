@@ -3,7 +3,7 @@
     <h1>Slow Guys Book Club</h1>
     <h2>Book selector</h2>
     <button @click="pickRandomBook">Pick a book</button>
-    <button @click="deleteBook" v-if="book">Delete book</button>
+    <!-- <button @click="deleteBook" v-if="book">Delete book</button> -->
     <div class="pickedBook">
       <p v-if="book">Selected book: {{ book.title }} with {{ book.pages }} pages, suggested by:{{ book.suggester }}</p>
       <p v-else-if="isLoading">Loading...</p>
@@ -64,15 +64,16 @@ setup(){
   methods: {
     
     async pickRandomBook() {
-      if (!isAuthenticated) {
-        console.error('User is not authenticated.');
-        return;
-      }
-      
+  if (!isAuthenticated) {
+    console.error('User is not authenticated.');
+    return;
+  }
+
   if (!db) {
     console.error("Firestore not initialized");
     return;
   }
+
   this.isLoading = true;
   try {
     const size = booksv2.length;
@@ -82,7 +83,8 @@ setup(){
     }
     const randomIndex = Math.floor(Math.random() * size);
     const selectedBookId = booksv2[randomIndex]; 
-    const selectedBookRef = doc(collection(db, "books"), selectedBookId); 
+    const selectedBookRef = doc(collection(db, "books"), selectedBookId);
+  
     const bookSnapshot = await getDoc(selectedBookRef);
     const selectedBook = {
       id: bookSnapshot.id,
@@ -93,8 +95,16 @@ setup(){
     };
     console.log("Selected book reference:", selectedBook.ref);
 
+ 
     this.book = selectedBook;
+
+  
+    await deleteDoc(selectedBookRef); 
+
+  
     booksv2.splice(randomIndex, 1);
+
+    console.log("Book deleted");
   } catch (error) {
     this.error = error.message;
   } finally {
@@ -102,48 +112,48 @@ setup(){
   }
 },
 
-async deleteBook() {
-  if (!isAuthenticated) {
-    console.error('User is not authenticated.');
-    return;
-  }
+// async deleteBook() {
+//   if (!isAuthenticated) {
+//     console.error('User is not authenticated.');
+//     return;
+//   }
 
-  console.log("Delete book function called");
-  if (!db) {
-    console.error("Firestore not initialized");
-    return;
-  }
+//   console.log("Delete book function called");
+//   if (!db) {
+//     console.error("Firestore not initialized");
+//     return;
+//   }
 
-  this.isLoading = true;
-  try {
-    if (confirm("Are you sure?")) {
-      const selectedBook = this.book; 
-      console.log("Selected book:", selectedBook);
+//   this.isLoading = true;
+//   try {
+//     if (confirm("Are you sure?")) {
+//       const selectedBook = this.book; 
+//       console.log("Selected book:", selectedBook);
 
-      if (selectedBook && selectedBook.ref) {
-        console.log("Selected book reference:", selectedBook.ref);
+//       if (selectedBook && selectedBook.ref) {
+//         console.log("Selected book reference:", selectedBook.ref);
 
        
-        await deleteDoc(doc(db, "books", selectedBook.id));
+//         await deleteDoc(doc(db, "books", selectedBook.id));
         
-        console.log("Book deleted");
-        this.book = null; 
+//         console.log("Book deleted");
+//         this.book = null; 
         
-        const indexToDelete = booksv2.indexOf(selectedBook.id);
-        if (indexToDelete !== -1) {
-          booksv2.splice(indexToDelete, 1);
-        }
-      } else {
-        console.error("Selected book or its reference is undefined.");
-      }
-    }
-  } catch (error) {
-    console.error("Error deleting book:", error);
-    this.error = error.message;
-  } finally {
-    this.isLoading = false;
-  }
-}
+//         const indexToDelete = booksv2.indexOf(selectedBook.id);
+//         if (indexToDelete !== -1) {
+//           booksv2.splice(indexToDelete, 1);
+//         }
+//       } else {
+//         console.error("Selected book or its reference is undefined.");
+//       }
+//     }
+//   } catch (error) {
+//     console.error("Error deleting book:", error);
+//     this.error = error.message;
+//   } finally {
+//     this.isLoading = false;
+//   }
+// }
 
 }
 }
