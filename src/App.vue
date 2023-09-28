@@ -1,7 +1,8 @@
 <template>
   <nav>
-    <router-link to="/">Pick Book</router-link> |
-    <router-link to="/AddBookView">Add Book</router-link>
+    <router-link to="/pick">Pick Book</router-link> |
+    <router-link to="/add">Add Book</router-link> |
+    <router-link to="/search">Search Book</router-link>
   </nav>
   <router-view/>
 </template>
@@ -30,3 +31,5 @@ nav a.router-link-exact-active {
   text-decoration: none;
 }
 </style>
+
+

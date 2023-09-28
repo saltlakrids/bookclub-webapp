@@ -5,9 +5,12 @@
     <button @click="pickRandomBook">Pick a book</button>
     <!-- <button @click="deleteBook" v-if="book">Delete book</button> -->
     <div class="pickedBook">
-      <p v-if="book">Selected book: {{ book.title }} with {{ book.pages }} pages, suggested by:{{ book.suggester }}</p>
-      <p v-else-if="isLoading">Loading...</p>
-      <p v-else-if="error">{{ error }}</p>
+      <div v-if="book" class="selected-book">
+        <h3>Selected Book</h3>
+        <p><strong>Title:</strong> {{ book.title }}</p>
+        <p><strong>Pages:</strong> {{ book.pages }}</p>
+        <p><strong>Suggested by:</strong> {{ book.suggester }}</p>
+      </div>
     </div>
     <img class="addHat" alt="The Hat" src="../assets/theHat.png" />
 
@@ -164,6 +167,24 @@ setup(){
 
 .pickedBook {
   color: blueviolet;
+  margin-top: 40px;
+  text-align: center;
+}
+.selected-book {
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+}
+
+.selected-book h3 {
+  color: #333;
+  margin-top: 0;
+}
+
+.selected-book p {
+  margin: 5px 0;
 }
 
 .container {
