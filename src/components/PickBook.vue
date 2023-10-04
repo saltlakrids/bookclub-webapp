@@ -115,49 +115,6 @@ setup(){
   }
 },
 
-// async deleteBook() {
-//   if (!isAuthenticated) {
-//     console.error('User is not authenticated.');
-//     return;
-//   }
-
-//   console.log("Delete book function called");
-//   if (!db) {
-//     console.error("Firestore not initialized");
-//     return;
-//   }
-
-//   this.isLoading = true;
-//   try {
-//     if (confirm("Are you sure?")) {
-//       const selectedBook = this.book; 
-//       console.log("Selected book:", selectedBook);
-
-//       if (selectedBook && selectedBook.ref) {
-//         console.log("Selected book reference:", selectedBook.ref);
-
-       
-//         await deleteDoc(doc(db, "books", selectedBook.id));
-        
-//         console.log("Book deleted");
-//         this.book = null; 
-        
-//         const indexToDelete = booksv2.indexOf(selectedBook.id);
-//         if (indexToDelete !== -1) {
-//           booksv2.splice(indexToDelete, 1);
-//         }
-//       } else {
-//         console.error("Selected book or its reference is undefined.");
-//       }
-//     }
-//   } catch (error) {
-//     console.error("Error deleting book:", error);
-//     this.error = error.message;
-//   } finally {
-//     this.isLoading = false;
-//   }
-// }
-
 }
 }
 
