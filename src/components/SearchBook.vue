@@ -1,16 +1,19 @@
 <template>
   <div>
     <h2>Search Books</h2>
-  </div>
-  <div>
-    <input v-model="searchQuery" @input="searchBooks" placeholder="Enter book title" />
-    <div class="book-list">
-      <div v-for="book in books" :key="book.id" class="book-item">
-        <img v-if="book.volumeInfo.imageLinks" :src="book.volumeInfo.imageLinks.smallThumbnail" alt="Book Cover" />
-        <div v-else class="no-cover">No Cover Available</div>
-        <div class="book-title">{{ book.volumeInfo.title }}</div>
-        <div v-if="book.volumeInfo.pageCount" class="page-count">{{ book.volumeInfo.pageCount }} pages</div>
-        <button @click="addToHat(book)">Add to Hat</button>
+    <div>
+      <input v-model="searchQuery" @input="searchBooks" placeholder="Enter book title" />
+      <div class="book-list">
+        <div v-for="book in books" :key="book.id" class="book-item">
+          <img v-if="book.volumeInfo.imageLinks" :src="book.volumeInfo.imageLinks.smallThumbnail" alt="Book Cover" />
+          <div v-else class="no-cover">No Cover Available</div>
+          <div class="book-title">{{ book.volumeInfo.title }}</div>
+          <div v-if="book.volumeInfo.pageCount" class="page-count">{{ book.volumeInfo.pageCount }} pages</div>
+          <button @click="addToHat(book)">Add to Hat</button>
+        </div>
+      </div>
+      <div v-if="addedToHat" class="added-to-hat-message">
+        Book added to the hat!
       </div>
     </div>
   </div>
@@ -25,6 +28,7 @@ export default {
     return {
       searchQuery: '',
       books: [],
+      addedToHat: false,
     };
   },
   methods: {
@@ -58,6 +62,9 @@ export default {
       })
       .then(() => {
         console.log('Book added to the hat!');
+        this.addedToHat = true;
+        this.searchQuery = '';
+        this.books = []; 
       })
       .catch(error => {
         console.error('Error adding book to the hat:', error);
@@ -73,7 +80,7 @@ export default {
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
-  justify-content: center; /* Center the book items */
+  justify-content: center; 
 }
 
 .book-item {
@@ -90,6 +97,11 @@ export default {
   font-size: 14px;
 }
 
+.added-to-hat-message {
+  color: green;
+  margin-top: 10px;
+}
+
 .no-cover {
   height: 150px;
   display: flex;
@@ -101,7 +113,7 @@ export default {
   color: #777;
 }
 
-/* Media queries for responsiveness */
+/* Media queries */
 @media (max-width: 768px) {
   .book-item {
     width: 100%; 

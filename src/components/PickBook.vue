@@ -11,6 +11,15 @@
         <p><strong>Pages:</strong> {{ book.pages }}</p>
         <p><strong>Suggested by:</strong> {{ book.suggester }}</p>
       </div>
+      <div v-else-if="isLoading" class="loading-message">
+        Loading...
+      </div>
+      <div v-else-if="error" class="error-message">
+        {{ error }}
+      </div>
+      <div v-else class="no-books-message" v-show="showNoBooksMessage">
+        No books to pick from.
+      </div>
     </div>
     <img class="addHat" alt="The Hat" src="../assets/theHat.png" />
 
@@ -60,7 +69,8 @@ setup(){
     return {
  book: "",
  isLoading: false,
- error: null
+ error: null,
+ showNoBooksMessage: false,
     };
   },
 
@@ -82,6 +92,7 @@ setup(){
     const size = booksv2.length;
     if (size === 0) {
       console.error("No books to pick from.");
+      this.showNoBooksMessage = true;
       return;
     }
     const randomIndex = Math.floor(Math.random() * size);
@@ -121,6 +132,14 @@ setup(){
 </script>
 
 <style scoped>
+.no-books-message {
+  color: red;
+  margin-top: 10px;
+}
+.loading-message,
+.error-message {
+  margin-top: 10px;
+}
 
 .pickedBook {
   color: blueviolet;
