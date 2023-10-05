@@ -34,7 +34,7 @@ export default {
   methods: {
     searchBooks() {
       
-      const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${this.searchQuery}&key=AIzaSyBIxo9f3EDXb0LJb8UQ_p5JB9j573vtYMU`;
+      const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${this.searchQuery}&key=******************************YMU`;
 
       this.books = []; 
       
