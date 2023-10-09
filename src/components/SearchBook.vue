@@ -23,6 +23,7 @@
 import { db } from '../firebase/init';
 import { doc, setDoc } from "firebase/firestore"; 
 
+
 export default {
   data() {
     return {
@@ -34,8 +35,9 @@ export default {
   methods: {
     searchBooks() {
       
-      const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${this.searchQuery}&key=******************************YMU`;
-
+      const apiKey = process.env.VUE_APP_GOOGLE_BOOKS_API_KEY;
+      const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${this.searchQuery}&key=${apiKey}`;
+      
       this.books = []; 
       
       if (this.searchQuery.length > 2) {
@@ -59,6 +61,7 @@ export default {
         title: book.volumeInfo.title,
         pages: book.volumeInfo.pageCount || null,
         suggester: suggesterName,
+        image: book.volumeInfo.imageLinks.smallThumbnail,
       })
       .then(() => {
         console.log('Book added to the hat!');

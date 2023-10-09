@@ -7,6 +7,9 @@
     <div class="pickedBook">
       <div v-if="book" class="selected-book">
         <h3>Selected Book</h3>
+        <br>
+        <img v-if="book.image" :src="book.image" alt="Book Cover" />
+          <div v-else class="no-cover">No Cover Available</div>
         <p><strong>Title:</strong> {{ book.title }}</p>
         <p><strong>Pages:</strong> {{ book.pages }}</p>
         <p><strong>Suggested by:</strong> {{ book.suggester }}</p>
@@ -57,6 +60,7 @@ setup(){
       title: doc.data().title,
       pages: doc.data().pages,
       suggester: doc.data().suggester,
+      image: doc.data().image,
     };
     fbBooks.push(book);
     booksv2.push(doc.id);
@@ -105,6 +109,7 @@ setup(){
       title: bookSnapshot.data().title,
       pages: bookSnapshot.data().pages,
       suggester: bookSnapshot.data().suggester,
+      image: bookSnapshot.data().image,
       ref: selectedBookRef, 
     };
     console.log("Selected book reference:", selectedBook.ref);
@@ -132,6 +137,17 @@ setup(){
 </script>
 
 <style scoped>
+
+.no-cover {
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+  color: #777;
+}
 .no-books-message {
   color: red;
   margin-top: 10px;
