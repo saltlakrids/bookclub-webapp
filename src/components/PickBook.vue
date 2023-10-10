@@ -1,6 +1,5 @@
 <template>
   <div class="container">
-    <h1>Slow Guys Book Club</h1>
     <h2>Book selector</h2>
     <button @click="pickRandomBook">Pick a book</button>
     <!-- <button @click="deleteBook" v-if="book">Delete book</button> -->

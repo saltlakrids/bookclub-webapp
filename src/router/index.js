@@ -1,8 +1,14 @@
-import { createRouter, createWebHashHistory } from 'vue-router'
-import HomeView from '../views/HomeView.vue'
+import { createRouter, createWebHashHistory } from 'vue-router';
+import HomeView from '../views/HomeView.vue';
 import SearchBook from '@/components/SearchBook.vue'; 
+import LandingView from '../views/LandingView.vue';
 
 const routes = [
+  {
+    path: '/',
+    name: 'landing',
+    component: LandingView
+  },
   {
     path: '/pick',
     name: 'pick',
