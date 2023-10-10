@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2>Search Books</h2>
+    <h2>Search Book</h2>
     <div>
       <input v-model="searchQuery" @input="searchBooks" placeholder="Enter book title" />
       <div class="book-list">
@@ -115,6 +115,25 @@ export default {
   background-color: #f5f5f5;
   color: #777;
 }
+
+form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-family: 'Quicksand', sans-serif;
+  }
+  
+  input {
+    width: 300px;
+    height: 40px;
+    margin: 10px 0;
+    padding: 10px;
+    font-size: 16px;
+    box-shadow: 2px 2px 8px #959595;
+    border: solid 1px;
+    border-radius: 7px;
+    font-family: 'Quicksand', sans-serif;
+  }
 
 /* Media queries */
 @media (max-width: 768px) {

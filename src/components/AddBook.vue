@@ -1,6 +1,7 @@
 <template>
   <div>
-    <h2>Book suggester</h2>
+    <h2>Add Book</h2>
+    <p>Recommended to try search book first</p>
     <form>
       <input v-model="title" type="text" placeholder="Book title" />
       <br />
@@ -101,6 +102,7 @@ export default {
   left: 50%;
   transform: translate(-50%, -50%);
   }
+
   .addText {
     background-image: url('@/assets/theBook.png');
     background-size: cover;

@@ -1,6 +1,6 @@
 <template>
   <div class="container">
-    <h2>Book selector</h2>
+    <h2>Pick Book</h2>
     <button @click="pickRandomBook">Pick a book</button>
     <!-- <button @click="deleteBook" v-if="book">Delete book</button> -->
     <div class="pickedBook">
@@ -137,6 +137,28 @@ setup(){
 
 <style scoped>
 
+button {
+    font-family: 'Quicksand', sans-serif;
+    width: 200px;
+    height: 50px;
+    margin-top: 10px;
+    background-color: rgb(173, 216, 230);
+    color: white;
+    font-size: 16px;
+    border: solid 1px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: rgb(88, 204, 243);
+  }
+
+.addHat {
+  padding-top: 70px;
+  width: 390px;
+}
+
 .no-cover {
   height: 150px;
   display: flex;
@@ -157,7 +179,7 @@ setup(){
 }
 
 .pickedBook {
-  color: blueviolet;
+  color: #8a2be2;
   margin-top: 40px;
   text-align: center;
 }
