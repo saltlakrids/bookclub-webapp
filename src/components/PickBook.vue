@@ -1,7 +1,9 @@
 <template>
   <div class="container">
-    <h2>Pick Book</h2>
-    <button @click="pickRandomBook">Pick a book</button>
+    <h2 class="heading">Pick Book</h2>
+   
+    <button class="button buttonAnimation" @click="pickRandomBook">Pick a book</button>
+    <p class="totalBooks totalBooksAnimation">Total Books: {{ totalBooks }}</p>
     <!-- <button @click="deleteBook" v-if="book">Delete book</button> -->
     <div class="pickedBook">
       <div v-if="book" class="selected-book">
@@ -23,7 +25,7 @@
         No books to pick from.
       </div>
     </div>
-    <img class="addHat" alt="The Hat" src="../assets/theHat.png" />
+    <img class="addHat hatAnimation" alt="The Hat" src="../assets/theHat.png" />
 
   </div>
 </template>
@@ -37,8 +39,8 @@ import { db } from '../firebase/init';
 
 
 const books = ref ([]);
+const totalBooks = ref(0);
 let isAuthenticated = false; 
-
 let booksv2 = [];
 
 
@@ -65,6 +67,7 @@ setup(){
     booksv2.push(doc.id);
   });
   books.value = fbBooks;
+  totalBooks.value = fbBooks.length;
 });
 },
  
@@ -74,6 +77,7 @@ setup(){
  isLoading: false,
  error: null,
  showNoBooksMessage: false,
+ totalBooks,
     };
   },
 
@@ -128,6 +132,7 @@ setup(){
   } finally {
     this.isLoading = false;
   }
+  totalBooks.value = booksv2.length;
 },
 
 }
@@ -154,10 +159,6 @@ button {
     background-color: rgb(88, 204, 243);
   }
 
-.addHat {
-  padding-top: 70px;
-  width: 390px;
-}
 
 .no-cover {
   height: 150px;
@@ -217,4 +218,95 @@ li {
   display: inline-block;
   margin: 0 10px;
 }
+
+.heading {
+  animation: enterAnimation 1s ease-in-out forwards;
+}
+
+
+
+.button {
+  visibility: hidden;
+  animation: enterAnimation 1s ease-in-out forwards;
+}
+
+.buttonAnimation {
+  animation: buttonAnimation 1.1s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+  animation-delay: 0.5s;
+}
+
+@keyframes buttonAnimation {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+    visibility: visible;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
+  }
+}
+
+
+@keyframes enterAnimation {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+    visibility: visible; 
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible; 
+  }
+}
+
+.addHat {
+  padding-top: 40px;
+  width: 390px;
+  visibility: hidden;
+}
+
+.hatAnimation {
+  animation: hatAnimation 1s ease-in-out forwards;
+  animation-delay: 1.5s;
+}
+
+@keyframes hatAnimation {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+    visibility: visible; 
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible; 
+  }
+}
+
+.totalBooks {
+  visibility: hidden;
+}
+
+.totalBooksAnimation {
+  animation: totalBooksAnimation 1s ease-in-out forwards;
+  animation-delay: 1s;
+}
+
+@keyframes totalBooksAnimation {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+    visibility: visible; 
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible; 
+  }
+}
+
+
 </style>

@@ -50,7 +50,7 @@ svg {
   height: 100%;
 }
 svg text {
-  animation: stroke 6s 1 alternate;
+  animation: stroke 3s 1 alternate;
   stroke-width: 2;
   stroke: #d01a71;
   font-size: 35px;
@@ -99,12 +99,12 @@ svg text {
 
 .subheadingAnimation {
   animation: subheadingAnimation 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
-  animation-delay: 5.5s;
+  animation-delay: 2.5s;
 }
 
 .bodyAnimation {
   animation: bodyAnimation 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
-  animation-delay: 6.5s;
+  animation-delay: 3.5s;
 }
 
 @keyframes subheadingAnimation {
@@ -140,7 +140,7 @@ svg text {
 
 .hatAnimation {
   animation: hatAnimation 1s ease-in-out forwards, wobble 1.5s infinite;
-  animation-delay: 7.5s;
+  animation-delay: 4.5s;
 }
 
 @keyframes hatAnimation {

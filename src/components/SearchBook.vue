@@ -1,8 +1,8 @@
 <template>
   <div>
-    <h2>Search Book</h2>
+    <h2 class="heading">Search Book</h2>
     <div>
-      <input v-model="searchQuery" @input="searchBooks" placeholder="Enter book title" />
+      <input class="search searchAnimation" v-model="searchQuery" @input="searchBooks" placeholder="Enter book title" />
       <div class="book-list">
         <div v-for="book in books" :key="book.id" class="book-item">
           <img v-if="book.volumeInfo.imageLinks" :src="book.volumeInfo.imageLinks.smallThumbnail" alt="Book Cover" />
@@ -134,6 +134,47 @@ form {
     border-radius: 7px;
     font-family: 'Quicksand', sans-serif;
   }
+
+
+
+.heading {
+  animation: headingAnimation 1s ease-in-out forwards;
+}
+
+@keyframes headingAnimation {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+
+  }
+}
+
+.search{
+  visibility: hidden;
+}
+
+.searchAnimation {
+  animation: searchAnimation 1s ease-in-out forwards;
+  animation-delay: 0.7s;
+}
+
+@keyframes searchAnimation {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+    visibility: visible; 
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible; 
+  }
+}
 
 /* Media queries */
 @media (max-width: 768px) {

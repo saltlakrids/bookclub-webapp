@@ -1,8 +1,8 @@
 <template>
   <nav class="navAnimation">
     <router-link to="/pick">Pick Book</router-link> |
-    <router-link to="/add">Add Book</router-link> |
-    <router-link to="/search">Search Book</router-link>
+    <router-link to="/search">Search Book</router-link> |
+    <router-link to="/add">Add Book</router-link> 
   </nav>
   <router-view/>
 </template>
@@ -33,11 +33,11 @@ nav a.router-link-exact-active {
 }
 
 .navAnimation {
-  animation: wave 4s linear 8s both;
+  animation: bounceInFromTop 5.5s linear both;
   visibility: visible;
 }
 
-/* @keyframes bounceInFromTop {
+@keyframes bounceInFromTop {
   0% {
     transform: translateY(-800px) rotate(-720deg);
     filter: blur(50px);
@@ -48,9 +48,9 @@ nav a.router-link-exact-active {
     filter: blur(0);
     opacity: 1;
   }
-} */
+}
 
-@keyframes wave {
+/* @keyframes wave {
   0% {
     opacity: 0;
   }
@@ -175,7 +175,7 @@ nav a.router-link-exact-active {
     opacity: 1;
     text-shadow: 0 0 30px rgba(255, 255, 255, 0.6), 0 0 60px rgba(255, 255, 255, 0.45), 0 0 110px rgba(255, 255, 255, 0.25), 0 0 100px rgba(255, 255, 255, 0.1);
   }
-}
+} */
 
 </style>
 
