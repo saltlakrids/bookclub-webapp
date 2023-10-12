@@ -16,6 +16,7 @@
         Book added to the hat!
       </div>
     </div>
+    <img class="addHat hatAnimation" alt="The Hat" src="../assets/theHat.png" />
   </div>
 </template>
 
@@ -180,6 +181,30 @@ form {
 @media (max-width: 768px) {
   .book-item {
     width: 100%; 
+  }
+}
+
+.addHat {
+  padding-top: 70px;
+  width: 390px;
+  visibility: hidden;
+}
+
+.hatAnimation {
+  animation: hatAnimation 1s ease-in-out forwards;
+  animation-delay: 1.3s;
+}
+
+@keyframes hatAnimation {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px);
+    visibility: visible;
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+    visibility: visible;
   }
 }
 </style>
