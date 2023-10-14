@@ -8,12 +8,41 @@
 </template>
 
 <style>
+
+body, html {
+  
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+
+body {
+  position: relative;
+  background-image: url('/src/assets/background.jpeg');
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+body::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+
+
 #app {
   font-family: 'Quicksand', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
-  color: #2c3e50;
+  color: #ffffff;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
 }
 
 nav {
@@ -23,7 +52,7 @@ nav {
 
 nav a {
   font-weight: bold;
-  color: #2c3e50;
+  color: #ffffff;
   text-decoration: none;
 }
 
