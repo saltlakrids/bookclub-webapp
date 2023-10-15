@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="heading">
+    <div class="heading intro">
       <svg>
         <text x="50%" y="50%" dy=".35em" text-anchor="middle">Slow Guys Book Club</text>
       </svg>
@@ -85,6 +85,12 @@ svg text {
 .heading {
   margin-top: -30px;
   margin-bottom: -45px;
+  position: relative;
+
+}
+
+.intro {
+  z-index: 99;
 }
 
 .subheading {

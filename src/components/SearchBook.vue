@@ -85,6 +85,7 @@ export default {
   flex-wrap: wrap;
   gap: 20px;
   justify-content: center; 
+  z-index: 99;
 }
 
 .book-item {
@@ -94,6 +95,7 @@ export default {
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   text-align: center;
+  z-index: 99;
 }
 
 .book-title {
@@ -102,9 +104,24 @@ export default {
 }
 
 .added-to-hat-message {
-  color: green;
+  position: relative;
+  color: #0df40d;
   margin-top: 10px;
+  z-index: 100;
 }
+
+button {
+    font-family: 'Quicksand', sans-serif;
+    width: 200px;
+    height: 50px;
+    margin-top: 10px;
+    background-color: #FFC90E;
+    color: white;
+    font-size: 16px;
+    border: solid 1px #333;
+    border-radius: 7px;
+    cursor: pointer;
+  }
 
 .no-cover {
   height: 150px;

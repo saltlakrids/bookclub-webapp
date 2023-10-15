@@ -32,6 +32,57 @@ body::before {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.7);
+
+}
+
+.intro {
+  z-index: 99;
+}
+
+
+.book-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center; 
+  z-index: 99;
+}
+
+.book-item {
+  width: 200px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  z-index: 99;
+}
+
+.heading {
+  z-index: 99;
+  position: relative;
+}
+
+.pickedBook {
+  color: #8a2be2;
+  margin-top: 40px;
+  text-align: center;
+  z-index: 99;
+}
+.selected-book {
+  background-color: #f0f0f0;
+  border-radius: 5px;
+  padding: 10px;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+  margin-bottom: 20px;
+  z-index: 99;
+}
+
+.added-to-hat-message {
+  position: relative;
+  color: #0df40d;
+  margin-top: 10px;
+  z-index: 100;
 }
 
 
@@ -57,7 +108,7 @@ nav a {
 }
 
 nav a.router-link-exact-active {
-  color: rgb(88, 204, 243);
+  color: #FFC90E;
   text-decoration: none;
 }
 
@@ -65,6 +116,23 @@ nav a.router-link-exact-active {
   animation: bounceInFromTop 5.5s linear both;
   visibility: visible;
 }
+
+button {
+    font-family: 'Quicksand', sans-serif;
+    width: 200px;
+    height: 50px;
+    margin-top: 10px;
+    background-color: #FFC90E;
+    color: white;
+    font-size: 16px;
+    border: solid 1px;
+    border-radius: 7px;
+    cursor: pointer;
+  }
+
+  button:hover {
+    background-color: #FFC90E;
+  }
 
 @keyframes bounceInFromTop {
   0% {

@@ -19,7 +19,7 @@
         Loading...
       </div>
       <div v-else-if="error" class="error-message">
-        {{ error }}
+        No books to pick from.
       </div>
       <div v-else class="no-books-message" v-show="showNoBooksMessage">
         No books to pick from.
@@ -147,16 +147,16 @@ button {
     width: 200px;
     height: 50px;
     margin-top: 10px;
-    background-color: rgb(173, 216, 230);
+    background-color: #FFC90E;
     color: white;
     font-size: 16px;
-    border: solid 1px;
+    border: solid 1px #333;
     border-radius: 7px;
     cursor: pointer;
   }
 
   button:hover {
-    background-color: rgb(88, 204, 243);
+    background-color: #FFC90E;
   }
 
 
@@ -171,7 +171,7 @@ button {
   color: #777;
 }
 .no-books-message {
-  color: red;
+  color: #ff0000;
   margin-top: 10px;
 }
 .loading-message,
@@ -183,6 +183,7 @@ button {
   color: #8a2be2;
   margin-top: 40px;
   text-align: center;
+  
 }
 .selected-book {
   background-color: #f0f0f0;

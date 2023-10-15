@@ -1,18 +1,25 @@
 <template>
   <div>
     <h2 class="heading">Add Book</h2>
-    <p class="subHeading subHeadingAnimation">Recommended to try search book first</p>
+    <p class="subHeading subHeadingAnimation">
+      Recommended to try search book first
+    </p>
     <form class="form formAnimation">
       <input v-model="title" type="text" placeholder="Book title" />
       <br />
       <input v-model="pages" type="number" placeholder="Number of pages" />
       <br />
-      <input v-model="suggester" type="text" placeholder="Who suggested the book" />
+      <input
+        v-model="suggester"
+        type="text"
+        placeholder="Who suggested the book"
+      />
       <br />
       <button class="button buttonAnimation" @click.prevent="addBook">
         Add to the hat
       </button>
     </form>
+    <div class="error" v-if="error">{{ error }}</div>
     <div class="addText" v-if="added">
       <div class="text">Book added!</div>
     </div>
@@ -35,10 +42,16 @@ export default {
       pages: "",
       suggester: "",
       added: false,
+      error: "",
     };
   },
   methods: {
     async addBook() {
+      if (!this.title || !this.pages || !this.suggester) {
+        this.error = "Please fill out all fields.";
+        return;
+      }
+
       var id = "id" + Math.random().toString(20).slice(2);
 
       console.log(title);
@@ -52,17 +65,25 @@ export default {
       this.pages = "";
       this.suggester = "";
       this.added = true;
+      this.error = "";
     },
   },
 };
 </script>
 
-<style>
+<style scoped>
 form {
   display: flex;
   flex-direction: column;
   align-items: center;
   font-family: "Quicksand", sans-serif;
+}
+
+.error {
+  color: #ff0000;
+  margin-top: 10px;
+  z-index: 99;
+  position: relative;
 }
 
 input {
@@ -82,16 +103,16 @@ button {
   width: 200px;
   height: 50px;
   margin-top: 10px;
-  background-color: lightblue;
+  background-color: #ffc90e;
   color: white;
   font-size: 16px;
-  border: solid 1px;
+  border: solid 1px #333;
   border-radius: 7px;
   cursor: pointer;
 }
 
 button:hover {
-  background-color: rgb(88, 204, 243);
+  background-color: #ffc90e;
 }
 
 .text {
