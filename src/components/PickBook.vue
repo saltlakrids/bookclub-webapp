@@ -2,9 +2,10 @@
   <div class="container">
     <h2 class="heading">Pick Book</h2>
 
-    <button class="button buttonAnimation" @click="pickRandomBook">
+    <button class="button buttonAnimation" @click="startBookPick">
       Pick a book
     </button>
+    <div v-if="countdown > 0" class="countdown">{{ countdown }}</div>
     <div class="totalBooksContainer" @click="toggleTotalBooks">
       <p class="totalBooks totalBooksAnimation">
         Total Books: <span :class="{ blurred: isTotalBooksClicked }">{{ totalBooks }}</span>
@@ -84,11 +85,43 @@ export default {
       showNoBooksMessage: false,
       totalBooks,
       isTotalBooksClicked,
+      countdown: 0,
     };
   },
 
   methods: {
+
+    delay(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    },
+
+    async startBookPick() {
+      this.countdown = 5; 
+
+  
+      for (let i = this.countdown; i > 0; i--) {
+        await this.delay(1000);
+        this.countdown = i;
+      }
+
+      this.countdown = 0;
+      this.pickRandomBook();
+    },
+
+    async animateCountdown(seconds) {
+      for (let i = seconds; i > 0; i--) {
+        await this.delay(1000);
+        console.log(`Countdown: ${i}`);
+        this.countdown = i; 
+      }
+    },
+
+
+
+
     async pickRandomBook() {
+
+
       if (!isAuthenticated) {
         console.error("User is not authenticated.");
         return;

@@ -69,29 +69,29 @@ svg {
 svg text {
   animation: stroke 3s 1 alternate;
   stroke-width: 2;
-  stroke: #d01a71;
+  stroke: #ffc90e;
   font-size: 35px;
 }
 @keyframes stroke {
   2% {
     fill: rgba(138, 43, 226, 0);
-    stroke: rgba(208, 26, 113, 1);
+    stroke: #ffc90e;
     stroke-dashoffset: 25%;
     stroke-dasharray: 0 50%;
     stroke-width: 2;
   }
   70% {
     fill: rgba(138, 43, 226, 0);
-    stroke: rgba(208, 26, 113, 1);
+    stroke: #ffc90e;
   }
   80% {
     fill: rgba(138, 43, 226, 0);
-    stroke: rgba(208, 26, 113, 1);
+    stroke: #ffc90e;
     stroke-width: 3;
   }
   100% {
     fill: rgba(138, 43, 226, 0);
-    stroke: rgba(208, 26, 113, 1);
+    stroke: #ffc90e;
     stroke-dashoffset: -25%;
     stroke-dasharray: 50% 0;
     stroke-width: 2;
