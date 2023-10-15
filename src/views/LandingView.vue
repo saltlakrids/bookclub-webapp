@@ -2,23 +2,40 @@
   <div>
     <div class="heading intro">
       <svg>
-        <text x="50%" y="50%" dy=".35em" text-anchor="middle">Slow Guys Book Club</text>
+        <text x="50%" y="50%" dy=".35em" text-anchor="middle">
+          Slow Guys Book Club
+        </text>
       </svg>
     </div>
     <h3 class="subheading subheadingAnimation">
       Welcome to the Webapp that helps you decide what book to read next!
     </h3>
-    <p class="body bodyAnimation">
-      Add your favorite books to the magic hat or let fate choose your next literary
-      adventure. Embrace the magic of the hat and pick your next great book!
-    </p>
-    <img class="addHat hatAnimation" alt="The Hat" src="../assets/theHat.png" />
+    <h4 class="body bodyAnimation">
+      Add your favorite books to the magic hat or let fate choose your next
+      literary adventure. Embrace the magic of the hat and pick your next great
+      book!
+    </h4>
+    <img
+      class="addHat hatAnimation"
+      alt="The Hat"
+      src="../assets/theHat.png"
+      @click="navigateToPickBook"
+    />
   </div>
 </template>
-<script></script>
+<script>
+export default {
+
+  methods: {
+    navigateToPickBook() {
+      this.$router.push({ name: 'pick' });
+    },
+  },
+};
+
+</script>
 
 <style scoped>
-
 @keyframes wobble {
   0%,
   100% {
@@ -86,7 +103,6 @@ svg text {
   margin-top: -30px;
   margin-bottom: -45px;
   position: relative;
-
 }
 
 .intro {
@@ -100,11 +116,13 @@ svg text {
 
 .body {
   visibility: hidden;
-  font-family: "Quicksand", sans-serif; 
+  font-family: "Quicksand", sans-serif;
+  margin: 15px;
 }
 
 .subheadingAnimation {
-  animation: subheadingAnimation 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
+  animation: subheadingAnimation 1s cubic-bezier(0.68, -0.55, 0.27, 1.55)
+    forwards;
   animation-delay: 2.5s;
 }
 
@@ -117,7 +135,7 @@ svg text {
   0% {
     opacity: 0;
     transform: translateY(-20px);
-    visibility: visible; 
+    visibility: visible;
   }
   100% {
     opacity: 1;
@@ -153,14 +171,12 @@ svg text {
   0% {
     opacity: 0;
     transform: translateY(-20px);
-    visibility: visible; 
+    visibility: visible;
   }
   100% {
     opacity: 1;
     transform: translateY(0);
-    visibility: visible; 
+    visibility: visible;
   }
 }
-
-
 </style>

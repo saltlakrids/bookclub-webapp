@@ -32,10 +32,27 @@ body::before {
   width: 100%;
   height: 100%;
   background-color: rgba(0, 0, 0, 0.7);
-
 }
 
 .intro {
+  z-index: 99;
+}
+
+.pickedBook {
+  color: #8a2be2;
+  margin-top: 40px;
+  text-align: center;
+  
+}
+
+.no-cover {
+  height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  color: #8a2be2;
+  position: relative;
   z-index: 99;
 }
 
@@ -51,9 +68,7 @@ body::before {
 .book-item {
   width: 200px;
   padding: 10px;
-  border: 1px solid #ddd;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   text-align: center;
   z-index: 99;
 }
@@ -64,13 +79,13 @@ body::before {
 }
 
 .pickedBook {
-  color: #8a2be2;
+  color: #ffffff;
   margin-top: 40px;
   text-align: center;
   z-index: 99;
 }
+
 .selected-book {
-  background-color: #f0f0f0;
   border-radius: 5px;
   padding: 10px;
   box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
@@ -116,6 +131,7 @@ nav a.router-link-exact-active {
   animation: bounceInFromTop 5.5s linear both;
   visibility: visible;
 }
+
 
 button {
     font-family: 'Quicksand', sans-serif;

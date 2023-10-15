@@ -58,11 +58,15 @@ export default {
       if (suggesterName) {
       const id = "id" + Math.random().toString(20).slice(2);
 
+       const thumbnail = book.volumeInfo.imageLinks
+       ? book.volumeInfo.imageLinks.smallThumbnail
+       : '';
+
       setDoc(doc(db, "books", id), {
         title: book.volumeInfo.title,
         pages: book.volumeInfo.pageCount || null,
         suggester: suggesterName,
-        image: book.volumeInfo.imageLinks.smallThumbnail,
+        image: thumbnail,
       })
       .then(() => {
         console.log('Book added to the hat!');
@@ -91,9 +95,7 @@ export default {
 .book-item {
   width: 200px;
   padding: 10px;
-  border: 1px solid #ddd;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   text-align: center;
   z-index: 99;
 }
@@ -128,10 +130,10 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid #ddd;
   border-radius: 8px;
-  background-color: #f5f5f5;
-  color: #777;
+  color: #ffffff;
+  position: relative;
+  z-index: 99;
 }
 
 form {
@@ -184,12 +186,12 @@ form {
 @keyframes searchAnimation {
   0% {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-20px) scale(1);
     visibility: visible; 
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
     visibility: visible; 
   }
 }
@@ -208,8 +210,31 @@ form {
 }
 
 .hatAnimation {
-  animation: hatAnimation 1s ease-in-out forwards;
+  animation: hatAnimation 1s ease-in-out forwards, wobble 1.5s infinite forwards;
   animation-delay: 1.3s;
+}
+
+@keyframes wobble {
+  0%,
+  100% {
+    transform: translateX(0%);
+    transform-origin: 50% 50%;
+  }
+  15% {
+    transform: translateX(-30px) rotate(6deg);
+  }
+  30% {
+    transform: translateX(15px) rotate(-6deg);
+  }
+  45% {
+    transform: translateX(-15px) rotate(3.6deg);
+  }
+  60% {
+    transform: translateX(9px) rotate(-2.4deg);
+  }
+  75% {
+    transform: translateX(-6px) rotate(1.2deg);
+  }
 }
 
 @keyframes hatAnimation {
