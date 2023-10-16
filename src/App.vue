@@ -112,24 +112,32 @@ body::before {
 }
 
 nav {
+  position: relative;
   padding: 30px;
   visibility: hidden;
+  z-index: 2;
 }
 
 nav a {
   font-weight: bold;
   color: #ffffff;
   text-decoration: none;
+  z-index: 2;
+  position: relative;
 }
 
 nav a.router-link-exact-active {
   color: #FFC90E;
   text-decoration: none;
+  z-index: 2;
+  position: relative;
 }
 
 .navAnimation {
   animation: bounceInFromTop 5.5s linear both;
   visibility: visible;
+  z-index: 2;
+  position: relative;
 }
 
 
