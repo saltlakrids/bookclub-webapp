@@ -31,11 +31,17 @@ export default {
       searchQuery: '',
       books: [],
       addedToHat: false,
+      searchTimeout: null,
     };
   },
   methods: {
     searchBooks() {
+
+      if (this.searchTimeout) {
+        clearTimeout(this.searchTimeout);
+      }
       
+      this.searchTimeout = setTimeout(() => {
       const apiKey = process.env.VUE_APP_GOOGLE_BOOKS_API_KEY;
       const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${this.searchQuery}&key=${apiKey}`;
       
@@ -67,7 +73,8 @@ export default {
             console.error('Error fetching books:', error);
           });
       }
-    },
+    }, 500);
+  },
     addToHat(book) {
 
       const suggesterName = window.prompt('Enter your first name:');

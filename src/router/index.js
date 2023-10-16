@@ -2,6 +2,7 @@ import { createRouter, createWebHashHistory } from 'vue-router';
 import HomeView from '../views/HomeView.vue';
 import SearchBook from '@/components/SearchBook.vue'; 
 import LandingView from '../views/LandingView.vue';
+import RateBook from '../views/RateBookView.vue';
 
 const routes = [
   {
@@ -25,6 +26,11 @@ const routes = [
     path: '/search',
     name: 'search', 
     component: SearchBook 
+  },
+  {
+    path: '/rate',
+    name: 'rate', 
+    component: RateBook 
   }
 ]
 
