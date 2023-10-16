@@ -5,15 +5,16 @@
     <button class="button buttonAnimation" @click="startBookPick">
       Pick a book
     </button>
-    <div v-if="countdown > 0" class="countdown">{{ countdown }}</div>
-    <div class="totalBooksContainer" @click="toggleTotalBooks">
+    <div v-if="countdown > 0" class="countdown" :class="{ 'countdown-animation': countdownAnimation }">{{ countdown }}</div>
+    <audio ref="drumRollAudio" src="drum-roll-2.mp3"></audio>
+   <div class="totalBooksContainer" @click="toggleTotalBooks">
       <p class="totalBooks totalBooksAnimation">
         Total Books: <span :class="{ blurred: isTotalBooksClicked }">{{ totalBooks }}</span>
       </p>
     </div>
-
     <!-- <button @click="deleteBook" v-if="book">Delete book</button> -->
     <div class="pickedBook">
+    
       <div v-if="book" class="selected-book">
         <h3>Selected Book</h3>
         <br />
@@ -96,7 +97,17 @@ export default {
     },
 
     async startBookPick() {
+
+    if (booksv2.length === 0) {
+    console.error("No books to pick from.");
+    this.showNoBooksMessage = true;
+    return;
+  }
       this.countdown = 5; 
+
+      setTimeout(() => {
+    this.$refs.drumRollAudio.play();
+  }, 1500);
 
   
       for (let i = this.countdown; i > 0; i--) {
@@ -104,20 +115,11 @@ export default {
         this.countdown = i;
       }
 
+      await this.delay(1000);
+
       this.countdown = 0;
       this.pickRandomBook();
     },
-
-    async animateCountdown(seconds) {
-      for (let i = seconds; i > 0; i--) {
-        await this.delay(1000);
-        console.log(`Countdown: ${i}`);
-        this.countdown = i; 
-      }
-    },
-
-
-
 
     async pickRandomBook() {
 
@@ -200,6 +202,32 @@ button {
 
 button:hover {
   background-color: #ffc90e;
+}
+
+.countdown {
+  color: #ffc90e;
+  position: relative;
+  z-index: 99;
+  font-size: 120px;
+  animation: countdownAnimation 1s infinite;
+}
+
+@keyframes countdownAnimation {
+  0%, 100% {
+    transform: scale(0.6);
+  }
+  20% {
+    transform: scale(1.3);
+  }
+  40% {
+    transform: scale(1.3);
+  }
+  60% {
+    transform: scale(1.3);
+  }
+  80% {
+    transform: scale(1.3);
+}
 }
 
 .no-cover {

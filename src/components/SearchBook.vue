@@ -45,7 +45,24 @@ export default {
         this.$axios.get(apiUrl)
           .then(response => {
             this.books = response.data.items || [];
+        
+          this.books.sort((a, b) => {
+              const thumbnailA = a.volumeInfo.imageLinks?.smallThumbnail ? 1 : 0;
+              const thumbnailB = b.volumeInfo.imageLinks?.smallThumbnail ? 1 : 0;
+              const pageCountA = a.volumeInfo.pageCount || 0;
+              const pageCountB = b.volumeInfo.pageCount || 0;
+              const titleA = a.volumeInfo.title || '';
+              const titleB = b.volumeInfo.title || '';
+
+              if (thumbnailB !== thumbnailA) {
+                return thumbnailB - thumbnailA;
+              } else if (pageCountB !== pageCountA) {
+                return pageCountB - pageCountA;
+              } else {
+                return titleA.localeCompare(titleB);
+            }})
           })
+
           .catch(error => {
             console.error('Error fetching books:', error);
           });
