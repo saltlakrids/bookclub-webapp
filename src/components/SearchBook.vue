@@ -22,7 +22,8 @@
       <div class="modal-content">
         <h2>Suggester name</h2>
         <form @submit.prevent="closeModalAndAddToHat">
-          <input placeholder="Enter your first name" v-model="suggesterName" required />
+          <button class="close-button" @click="closeModal">&times;</button>
+          <input placeholder="Enter your first name" v-model="suggesterName" required autofocus/>
           <button @click="addToHat(selectedBook)">Save</button>
         </form>
       </div>
@@ -47,11 +48,15 @@ export default {
   },
   methods: {
 
+    
+
     searchBooks() {
 
       if (this.searchTimeout) {
         clearTimeout(this.searchTimeout);
       }
+      
+
       
       this.searchTimeout = setTimeout(() => {
       const apiKey = process.env.VUE_APP_GOOGLE_BOOKS_API_KEY;
@@ -93,6 +98,11 @@ export default {
     this.selectedBook = book;
     this.isModalOpen = true;
   },
+
+  closeModal() {
+      this.isModalOpen = false;
+    },
+
 
   closeModalAndAddToHat() {
     this.isModalOpen = false;
@@ -233,6 +243,17 @@ form {
 
 .search{
   visibility: hidden;
+}
+
+.close-button {
+  position: absolute;
+  top: 35%;
+  left: 62%;
+  font-size: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #fff; 
 }
 
 .searchAnimation {
