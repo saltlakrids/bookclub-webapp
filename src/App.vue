@@ -2,8 +2,8 @@
   <nav class="navAnimation">
     <router-link to="/pick">Pick Book</router-link> |
     <router-link to="/search">Search Book</router-link> |
-    <router-link to="/add">Add Book</router-link> |
-    <router-link to="/rate">Rate Book</router-link>  
+    <router-link to="/add">Add Book</router-link> 
+    <!-- <router-link to="/rate">Rate Book</router-link>   -->
   </nav>
   <router-view/>
 </template>

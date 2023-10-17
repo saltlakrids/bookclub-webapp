@@ -9,7 +9,7 @@
           <div v-else class="no-cover">No Cover Available</div>
           <div class="book-title">{{ book.volumeInfo.title }}</div>
           <div v-if="book.volumeInfo.pageCount" class="page-count">{{ book.volumeInfo.pageCount }} pages</div>
-          <button @click="addToHat(book)">Add to Hat</button>
+          <button @click="openModal(book)">Add to Hat</button>
         </div>
       </div>
       <div v-if="addedToHat" class="added-to-hat-message">
@@ -18,6 +18,15 @@
     </div>
     <img class="addHat hatAnimation" alt="The Hat" src="../assets/theHat.png" />
   </div>
+  <div v-if="isModalOpen" class="modal">
+      <div class="modal-content">
+        <h2>Suggester name</h2>
+        <form @submit.prevent="closeModalAndAddToHat">
+          <input placeholder="Enter your first name" v-model="suggesterName" required />
+          <button @click="addToHat(selectedBook)">Save</button>
+        </form>
+      </div>
+    </div>
 </template>
 
 <script>
@@ -32,9 +41,12 @@ export default {
       books: [],
       addedToHat: false,
       searchTimeout: null,
+      isModalOpen: false,
+      suggesterName: '',
     };
   },
   methods: {
+
     searchBooks() {
 
       if (this.searchTimeout) {
@@ -75,11 +87,25 @@ export default {
       }
     }, 500);
   },
+
+  
+  openModal(book) {
+    this.selectedBook = book;
+    this.isModalOpen = true;
+  },
+
+  closeModalAndAddToHat() {
+    this.isModalOpen = false;
+  },
+
     addToHat(book) {
+      
+      if (book){
 
-      const suggesterName = window.prompt('Enter your first name:');
+  
+      // const suggesterName = window.prompt('Enter your first name:');
 
-      if (suggesterName) {
+      if (this.suggesterName) {
       const id = "id" + Math.random().toString(20).slice(2);
 
        const thumbnail = book.volumeInfo.imageLinks
@@ -89,21 +115,28 @@ export default {
       setDoc(doc(db, "books", id), {
         title: book.volumeInfo.title,
         pages: book.volumeInfo.pageCount || null,
-        suggester: suggesterName,
+        suggester: this.suggesterName,
         image: thumbnail,
       })
       .then(() => {
         console.log('Book added to the hat!');
         this.addedToHat = true;
         this.searchQuery = '';
-        this.books = []; 
+        this.books = [];
+        this.suggesterName = '';
+        this.closeModalAndAddToHat();
       })
       .catch(error => {
         console.error('Error adding book to the hat:', error);
       });
     }
-    },
+    else {
+    console.error('Suggester name is required.');
+  }
+    }
   },
+  },
+
 };
 </script>
 
@@ -220,6 +253,26 @@ form {
   }
 }
 
+.modal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 110;
+}
+
+.modal-content {
+  background: #C8BFE7;
+  padding: 20px;
+  border-radius: 8px;
+  z-index: 110;
+}
+
 /* Media queries */
 @media (max-width: 768px) {
   .book-item {
@@ -227,11 +280,14 @@ form {
   }
 }
 
+
 .addHat {
   padding-top: 70px;
   width: 390px;
   visibility: hidden;
 }
+
+
 
 .hatAnimation {
   animation: hatAnimation 1s ease-in-out forwards, wobble 1.5s infinite forwards;

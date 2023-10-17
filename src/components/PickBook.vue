@@ -191,11 +191,13 @@ export default {
         this.showNoBooksMessage = true;
         return;
       }
+      
       this.countdown = 5;
 
       setTimeout(() => {
         this.$refs.drumRollAudio.play();
       }, 1500);
+      
 
       for (let i = this.countdown; i > 0; i--) {
         await this.delay(1000);
@@ -315,6 +317,7 @@ button:hover {
   position: relative;
   z-index: 99;
   font-size: 120px;
+  transition: 2s ease-in;
   animation: countdownAnimation 1s infinite;
 }
 
