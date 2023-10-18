@@ -3,19 +3,15 @@
     <div ref="fireworksContainer" class="fireworks-container"></div>
     <div class="container">
       <h2 class="heading">Pick Book</h2>
-      <button class="button buttonAnimation" @click="startBookPick">
+      <!-- <button class="button buttonAnimation" @click="startBookPick">
         Pick a book
-      </button>
+      </button> -->
       <audio ref="drumRollAudio" src="drum-roll-2.mp3"></audio>
       <audio ref="trompetAudio" src="trompets.mp3"></audio>
       <div class="totalBooksContainer" @click="toggleTotalBooks">
-        <p class="totalBooks totalBooksAnimation">
-          Total Books:
-          <span :class="{ blurred: isTotalBooksClicked }">{{
-            totalBooks
-          }}</span>
-        </p>
-      </div>
+    <p>{{ showTotalBooks ? 'Hide' : 'Show' }} books in the hat</p>
+  </div>
+
       <div
         v-if="countdown > 0"
         class="countdown"
@@ -54,8 +50,19 @@
       <img
         class="addHat hatAnimation"
         alt="The Hat"
-        src="../assets/theHat.png"
+        src="../assets/theHat.png" @click="startBookPick"
       />
+      <div v-if="showTotalBooks" class="bookTitles">
+  <p class="totalBooks totalBooksAnimation">
+          Total Books:
+          <span :class="{ blurred: isTotalBooksClicked }">{{
+            totalBooks
+          }}</span>
+        </p>
+  <ul>
+    <li v-for="title in bookTitles" :key="title">{{ title }}</li>
+  </ul>
+</div>
     </div>
   </div>
 </template>
@@ -79,6 +86,7 @@ const isTotalBooksClicked = ref(true);
 let isAuthenticated = false;
 let booksv2 = [];
 const fireworks = ref(null);
+const showTotalBooks = ref(false);
 
 export default {
   setup() {
@@ -167,6 +175,13 @@ export default {
     });
     return { fireworksContainer };
   },
+    
+    computed: {
+    bookTitles() {
+      return books.value.map((book) => book.title);
+    },
+  },
+
 
   data() {
     return {
@@ -177,6 +192,7 @@ export default {
       totalBooks,
       isTotalBooksClicked,
       countdown: 0,
+      showTotalBooks,
     };
   },
 
@@ -184,6 +200,7 @@ export default {
     delay(ms) {
       return new Promise((resolve) => setTimeout(resolve, ms));
     },
+
 
     async startBookPick() {
       if (booksv2.length === 0) {
@@ -199,7 +216,7 @@ export default {
       }, 1500);
       
 
-      for (let i = this.countdown; i > 0; i--) {
+      for (let i = this.countdown - 1; i > 0; i--) {
         await this.delay(1000);
         this.countdown = i;
       }
@@ -269,6 +286,7 @@ export default {
     },
     toggleTotalBooks() {
       this.isTotalBooksClicked = !this.isTotalBooksClicked;
+      this.showTotalBooks = !this.showTotalBooks;
     },
   },
 };
@@ -347,6 +365,15 @@ button:hover {
 .fade-enter,
 .fade-leave-to {
   opacity: 0;
+}
+
+.bookTitles {
+  position: relative;
+  z-index: 99;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  width: 250px;
 }
 
 .no-cover {
@@ -448,6 +475,9 @@ li {
   padding-top: 40px;
   width: 390px;
   visibility: hidden;
+  position: relative;
+  z-index: 99;
+  cursor: pointer;
 }
 
 .hatAnimation {
@@ -491,14 +521,14 @@ li {
   }
 }
 
-.totalBooks {
+/* .totalBooks {
   visibility: hidden;
 }
 
 .totalBooksAnimation {
   animation: totalBooksAnimation 1s ease-in-out forwards;
   animation-delay: 1s;
-}
+} */
 
 @keyframes totalBooksAnimation {
   0% {

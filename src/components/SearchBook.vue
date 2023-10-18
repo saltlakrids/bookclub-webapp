@@ -1,6 +1,6 @@
 <template>
   <div>
-    <h2 class="heading">Search Book</h2>
+    <h2 class="heading">Add Book</h2>
     <div>
       <input class="search searchAnimation" v-model="searchQuery" @input="searchBooks" placeholder="Enter book title" />
       <div class="book-list">
