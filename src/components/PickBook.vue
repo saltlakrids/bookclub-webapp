@@ -9,8 +9,8 @@
       <audio ref="drumRollAudio" src="drum-roll-2.mp3"></audio>
       <audio ref="trompetAudio" src="trompets.mp3"></audio>
       <div class="totalBooksContainer" @click="toggleTotalBooks">
-    <p>{{ showTotalBooks ? 'Hide' : 'Show' }} books in the hat</p>
-  </div>
+        <p>{{ showTotalBooks ? "Hide" : "Show" }} books in the hat</p>
+      </div>
 
       <div
         v-if="countdown > 0"
@@ -33,9 +33,12 @@
           </div>
         </transition>
 
-        <div v-if="showCatGif && !isLoading && !error && !showNoBooksMessage" class="cat-trompet-container">
-        <img src="cat-trompet.gif" alt="CatTrompetGIF" />
-      </div>
+        <div
+          v-if="showCatGif && !isLoading && !error && !showNoBooksMessage"
+          class="cat-trompet-container"
+        >
+          <img src="cat-trompet.gif" alt="CatTrompetGIF" />
+        </div>
 
         <div v-else-if="isLoading" class="loading-message">Loading...</div>
 
@@ -50,25 +53,26 @@
       <img
         class="addHat hatAnimation"
         alt="The Hat"
-        src="../assets/theHat.png" @click="startBookPick"
+        src="../assets/theHat.png"
+        @click="startBookPick"
       />
       <div v-if="showTotalBooks" class="bookTitles">
-  <p class="totalBooks totalBooksAnimation">
+        <p class="totalBooks totalBooksAnimation">
           Total Books:
           <span :class="{ blurred: isTotalBooksClicked }">{{
             totalBooks
           }}</span>
         </p>
-  <ul>
-    <li v-for="title in bookTitles" :key="title">{{ title }}</li>
-  </ul>
-</div>
+        <ul>
+          <li v-for="title in filteredBookTitles" :key="title">{{ title }}</li>
+        </ul>
+      </div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from "vue";
+import { ref, onMounted, onUnmounted, } from "vue";
 import { Fireworks } from "fireworks-js";
 import { getAuth, onAuthStateChanged } from "firebase/auth";
 import {
@@ -77,6 +81,7 @@ import {
   doc,
   getDoc,
   deleteDoc,
+  setDoc,
 } from "firebase/firestore";
 import { db } from "../firebase/init";
 
@@ -95,6 +100,8 @@ export default {
     onAuthStateChanged(auth, (user) => {
       isAuthenticated = !!user;
     });
+
+
     onMounted(async () => {
       const querySnapshot = await getDocs(collection(db, "books"));
       let fbBooks = [];
@@ -173,12 +180,24 @@ export default {
     onUnmounted(() => {
       fireworks.value.stop();
     });
-    return { fireworksContainer };
+    return { fireworksContainer, totalBooks,  };
   },
-    
-    computed: {
-    bookTitles() {
-      return books.value.map((book) => book.title);
+
+  //     computed: {
+  //   bookTitles() {
+  //     const selectedBookTitle = this.book ? this.book.title : null;
+  //     return books.value
+  //       .filter((book) => book.title !== selectedBookTitle)
+  //       .map((book) => book.title);
+  //   },
+  // },
+
+  computed: {
+    filteredBookTitles() {
+      const selectedBookTitle = this.book ? this.book.title : null;
+      return books.value
+        .filter((book) => book.title !== selectedBookTitle)
+        .map((book) => book.title);
     },
   },
 
@@ -189,7 +208,6 @@ export default {
       isLoading: false,
       error: null,
       showNoBooksMessage: false,
-      totalBooks,
       isTotalBooksClicked,
       countdown: 0,
       showTotalBooks,
@@ -201,20 +219,18 @@ export default {
       return new Promise((resolve) => setTimeout(resolve, ms));
     },
 
-
     async startBookPick() {
       if (booksv2.length === 0) {
         console.error("No books to pick from.");
         this.showNoBooksMessage = true;
         return;
       }
-      
+
       this.countdown = 5;
 
       setTimeout(() => {
         this.$refs.drumRollAudio.play();
       }, 1500);
-      
 
       for (let i = this.countdown - 1; i > 0; i--) {
         await this.delay(1000);
@@ -272,18 +288,37 @@ export default {
 
         this.book = selectedBook;
 
+        await this.addBookToRatings(selectedBook);
+
         await deleteDoc(selectedBookRef);
 
         booksv2.splice(randomIndex, 1);
 
         console.log("Book deleted");
+        this.totalBooks = booksv2.length;
       } catch (error) {
         this.error = error.message;
       } finally {
         this.isLoading = false;
       }
-      totalBooks.value = booksv2.length;
+      this.totalBooks = booksv2.length;
+      console.log("Total Books:", this.totalBooks);
     },
+    async addBookToRatings(selectedBook) {
+      try {
+        await setDoc(doc(collection(db, "ratings"), selectedBook.id), {
+          title: selectedBook.title,
+          pages: selectedBook.pages,
+          suggester: selectedBook.suggester,
+          image: selectedBook.image,
+        });
+
+        console.log("Book added to ratings successfully!");
+      } catch (error) {
+        console.error("Error adding book to ratings: ", error);
+      }
+    },
+
     toggleTotalBooks() {
       this.isTotalBooksClicked = !this.isTotalBooksClicked;
       this.showTotalBooks = !this.showTotalBooks;
