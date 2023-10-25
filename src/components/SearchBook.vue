@@ -311,7 +311,7 @@ form {
 
 
 .hatAnimation {
-  animation: hatAnimation 1s ease-in-out forwards, wobble 1.5s infinite forwards;
+  animation: hatAnimation 1s ease-in-out forwards;
   animation-delay: 1.3s;
 }
 
