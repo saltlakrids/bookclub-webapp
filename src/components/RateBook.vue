@@ -13,6 +13,20 @@
         </div>
       </div>
       <h3 class="heading">Read and rated books</h3>
+      <div class="sorting-options sort-show">
+        <select v-model="sortOption" @change="sortReadAndRatedBooks">
+          <option value="default">Sort List</option>
+          <option value="highestScore">Highest Score</option>
+          <option value="alphabetical">Alphabetical</option>
+          <option value="suggester">Suggester Name</option>
+          <option value="pages">Number of Pages</option>
+          <option value="frederik">Frederik's Rating</option>
+          <option value="chrisRating">Chris's Rating</option>
+          <option value="oscarRating">Oscar's Rating</option>
+          <option value="jensRating">Jens's Rating</option>
+          <option value="dumstreiRating">Dumstrei's Rating</option>
+        </select>
+      </div>
       <div class="book-list read">
         <div v-for="book in readAndRated" :key="book.id" class="book-item">
           <img v-if="book.image" :src="book.image" alt="Book Cover" />
@@ -110,6 +124,7 @@ export default {
       oscarRating: 1,
       jensRating: 1,
       dumstreiRating: 1,
+      sortOption: "default",
     };
   },
   methods: {
@@ -129,6 +144,7 @@ export default {
             oscarRating: data.oscarRating,
             jensRating: data.jensRating,
             dumstreiRating: data.dumstreiRating,
+            timestamp: data.timestamp,
           };
         });
 
@@ -177,6 +193,7 @@ export default {
           oscarRating: this.oscarRating,
           jensRating: this.jensRating,
           dumstreiRating: this.dumstreiRating,
+          timestamp: Date.now(),
         })
           .then(() => {
             console.log("Book rated");
@@ -243,6 +260,70 @@ export default {
 
       return average.toFixed(1);
     },
+    sortReadAndRatedBooks() {
+      switch (this.sortOption) {
+
+        case "default":
+      break;
+
+        case "highestScore":
+          this.readAndRated.sort((a, b) => {
+            const averageA = this.calculateAverageRating(a);
+            const averageB = this.calculateAverageRating(b);
+            return averageB - averageA;
+          });
+          break;
+
+        case "alphabetical":
+          this.readAndRated.sort((a, b) => {
+            return a.title.localeCompare(b.title);
+          });
+          break;
+
+          case "pages":
+          this.sortByNumeric("pages");
+          break;
+
+        case "frederik":
+          this.sortByRating("frederikRating");
+          break;
+
+        case "chrisRating":
+          this.sortByRating("chrisRating");
+          break;
+
+        case "oscarRating":
+          this.sortByRating("oscarRating");
+          break;
+
+        case "jensRating":
+          this.sortByRating("jensRating");
+          break;
+
+        case "dumstreiRating":
+          this.sortByRating("dumstreiRating");
+          break;
+
+        case "suggester":
+          this.readAndRated.sort((a, b) =>
+            a.suggester.localeCompare(b.suggester)
+          );
+          break;
+
+        default:
+          break;
+      }
+    },
+
+    sortByRating(ratingKey) {
+      this.readAndRated.sort((a, b) => {
+        return b[ratingKey] - a[ratingKey];
+      });
+    },
+
+    sortByNumeric(property) {
+      this.readAndRated.sort((a, b) => b[property] - a[property]);
+    },
   },
   created() {
     this.rateBooks();
@@ -251,6 +332,21 @@ export default {
 </script>
 
 <style scoped>
+.sorting-options {
+  margin-bottom: 20px;
+  position: relative;
+  z-index: 101;
+}
+
+label {
+  margin-right: 8px;
+  font-weight: bold;
+}
+
+select {
+  padding: 8px;
+  font-size: 14px;
+}
 .book-list {
   display: flex;
   flex-wrap: wrap;
@@ -290,6 +386,7 @@ button {
   border: solid 1px #333;
   border-radius: 7px;
   cursor: pointer;
+  z-index: 99;
 }
 
 .no-cover {
