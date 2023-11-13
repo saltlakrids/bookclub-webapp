@@ -4,6 +4,7 @@
     <div>
       <h3 class="heading">Waiting to be rated</h3>
       <div class="book-list waiting">
+       <template v-if="waitingToBeRated.length > 0">
         <div v-for="book in waitingToBeRated" :key="book.id" class="book-item">
           <img v-if="book.image" :src="book.image" alt="Book Cover" />
           <div v-else class="no-cover">No Cover Available</div>
@@ -11,6 +12,10 @@
           <div v-if="book.pages" class="page-count">{{ book.pages }} pages</div>
           <button @click="openModal(book)">Rate</button>
         </div>
+        </template>
+         <template v-else>
+          <p class="no-books-waiting">No books waiting for rating.</p>
+        </template>
       </div>
       <h3 class="heading">Read and rated books</h3>
       <div class="sorting-options sort-show">
@@ -336,6 +341,8 @@ export default {
   margin-bottom: 20px;
   position: relative;
   z-index: 101;
+   animation: headingAnimation 1s ease-in-out forwards;
+
 }
 
 label {
@@ -466,6 +473,13 @@ input {
     transform: translateY(0) scale(1);
     visibility: visible;
   }
+}
+
+.no-books-waiting {
+  color: #0df40d;
+  position: relative;
+  z-index: 99;
+  animation: headingAnimation 1s ease-in-out forwards;
 }
 
 .modal {
