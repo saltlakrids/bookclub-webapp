@@ -183,12 +183,12 @@ export default {
       this.isModalOpen = false;
     },
 
-    rateBook(book) {
+    async rateBook(book) {
       if (book) {
         const id = "id" + Math.random().toString(20).slice(2);
         const thumbnail = book.image ? book.image : "";
 
-        setDoc(doc(db, "rated", id), {
+       await setDoc(doc(db, "rated", id), {
           title: book.title,
           pages: book.pages || null,
           suggester: book.suggester,
@@ -233,11 +233,14 @@ export default {
             this.jensRating = "";
             this.dumstreiRating = "";
 
-            this.closeModalAndAddToHat();
+            this.closeModalAndAddToHat(); 
+            
+            
           })
           .catch((error) => {
             console.error("Error rating the book:", error);
           });
+          await this.rateBooks();
       } else {
         console.error("Suggester name is required.");
       }

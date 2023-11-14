@@ -23,7 +23,12 @@
         <h2>Suggester name</h2>
         <form @submit.prevent="closeModalAndAddToHat">
           <button class="close-button" @click="closeModal">&times;</button>
-          <input placeholder="Enter your first name" v-model="suggesterName" required autofocus/>
+          <select class="name-list" v-model="suggesterName" required>
+            <option disabled value="">Select a name</option>
+            <option v-for="name in suggesterNames" :key="name" :value="name">
+              {{ name }}
+            </option>
+          </select>
           <button @click="addToHat(selectedBook)">Save</button>
         </form>
       </div>
@@ -43,12 +48,14 @@ export default {
       addedToHat: false,
       searchTimeout: null,
       isModalOpen: false,
-      suggesterName: '',
+      suggesterNames: ['Chris', 'Eva', 'Frederik', 'Jens', 'Michael', 'Oscar'],
     };
   },
   methods: {
 
-    
+    capitalizeFirstLetter() {
+      this.title = this.title.charAt(0).toUpperCase() + this.title.slice(1);
+    },
 
     searchBooks() {
 
@@ -247,8 +254,8 @@ form {
 
 .close-button {
   position: absolute;
-  top: 35%;
-  left: 62%;
+  top: 28%;
+  left: 51%;
   font-size: 20px;
   background: none;
   border: none;
@@ -299,7 +306,30 @@ form {
   .book-item {
     width: 100%; 
   }
+  .close-button {
+  position: absolute;
+  top: 35%;
+  left: 50%;
+  font-size: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #fff; 
 }
+  
+}
+
+.name-list {
+    color: #333;
+    width: 220px;
+    height: 30px;
+    margin: 10px 0;
+    font-size: 14px;
+    box-shadow: 2px 2px 8px #959595;
+    border: solid 1px;
+    border-radius: 7px;
+    font-family: 'Quicksand', sans-serif;
+  }
 
 
 .addHat {
