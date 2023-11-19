@@ -8,7 +8,7 @@
       </button> -->
       <audio ref="drumRollAudio" src="drum-roll-2.mp3"></audio>
       <audio ref="trompetAudio" src="trompets.mp3"></audio>
-      <div class="totalBooksContainer" @click="toggleTotalBooks">
+      <div class="totalBooksContainer " @click="toggleTotalBooks">
         <p>{{ showTotalBooks ? "Hide" : "Show" }} books in the hat</p>
       </div>
 
@@ -517,7 +517,7 @@ li {
 
 .hatAnimation {
   animation: hatAnimation 1s ease-in-out forwards, wobble 1.5s infinite forwards;
-  animation-delay: 1.5s;
+  animation-delay: 2s;
 }
 
 @keyframes wobble {
@@ -563,7 +563,7 @@ li {
 .totalBooksAnimation {
   animation: totalBooksAnimation 1s ease-in-out forwards;
   animation-delay: 1s;
-} */
+} 
 
 @keyframes totalBooksAnimation {
   0% {
@@ -576,5 +576,5 @@ li {
     transform: translateY(0);
     visibility: visible;
   }
-}
+} */
 </style>

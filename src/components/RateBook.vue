@@ -4,16 +4,22 @@
     <div>
       <h3 class="heading">Waiting to be rated</h3>
       <div class="book-list waiting">
-       <template v-if="waitingToBeRated.length > 0">
-        <div v-for="book in waitingToBeRated" :key="book.id" class="book-item">
-          <img v-if="book.image" :src="book.image" alt="Book Cover" />
-          <div v-else class="no-cover">No Cover Available</div>
-          <div class="book-title">{{ book.title }}</div>
-          <div v-if="book.pages" class="page-count">{{ book.pages }} pages</div>
-          <button @click="openModal(book)">Rate</button>
-        </div>
+        <template v-if="waitingToBeRated.length > 0">
+          <div
+            v-for="book in waitingToBeRated"
+            :key="book.id"
+            class="book-item"
+          >
+            <img v-if="book.image" :src="book.image" alt="Book Cover" />
+            <div v-else class="no-cover">No Cover Available</div>
+            <div class="book-title">{{ book.title }}</div>
+            <div v-if="book.pages" class="page-count">
+              {{ book.pages }} pages
+            </div>
+            <button @click="openModal(book)">Rate</button>
+          </div>
         </template>
-         <template v-else>
+        <template v-else>
           <p class="no-books-waiting">No books waiting for rating.</p>
         </template>
       </div>
@@ -28,8 +34,9 @@
           <option value="frederik">Frederik's Rating</option>
           <option value="chrisRating">Chris's Rating</option>
           <option value="oscarRating">Oscar's Rating</option>
-          <option value="jensRating">Jens's Rating</option>
           <option value="dumstreiRating">Dumstrei's Rating</option>
+          <option value="evaRating">Eva's Rating</option>
+          <option value="jensRating">Jens's Rating</option>
         </select>
       </div>
       <div class="book-list read">
@@ -52,7 +59,7 @@
         <form @submit.prevent="closeModalAndAddToHat">
           <button class="close-button" @click="closeModal">&times;</button>
           <div class="rating-inputs">
-            <label for="chrisRating">Chris's Rating:</label>
+            <label for="chrisRating">Chris:</label>
             <input
               type="number"
               id="chrisRating"
@@ -62,7 +69,7 @@
               required
             />
 
-            <label for="frederikRating">Frederik's Rating:</label>
+            <label for="frederikRating">Frederik:</label>
             <input
               type="number"
               id="frederikRating"
@@ -72,7 +79,7 @@
               required
             />
 
-            <label for="oscarRating">Oscar's Rating:</label>
+            <label for="oscarRating">Oscar:</label>
             <input
               type="number"
               id="oscarRating"
@@ -82,7 +89,17 @@
               required
             />
 
-            <label for="jensRating">Jens's Rating:</label>
+            <label for="dumstreiRating">Dumstrei:</label>
+            <input
+              type="number"
+              id="dumstreiRating"
+              v-model="dumstreiRating"
+              min="1"
+              max="10"
+              required
+            />
+
+            <label for="jensRating">Jens:</label>
             <input
               type="number"
               id="jensRating"
@@ -91,14 +108,13 @@
               max="10"
             />
 
-            <label for="dumstreiRating">Dumstrei's Rating:</label>
+            <label for="evaRating">Eva:</label>
             <input
               type="number"
-              id="dumstreiRating"
-              v-model="dumstreiRating"
+              id="evaRating"
+              v-model="evaRating"
               min="1"
               max="10"
-              required
             />
           </div>
           <button @click="rateBook(selectedBook)">Save rating</button>
@@ -129,6 +145,7 @@ export default {
       oscarRating: 1,
       jensRating: 1,
       dumstreiRating: 1,
+      evaRating: 1,
       sortOption: "default",
     };
   },
@@ -149,6 +166,7 @@ export default {
             oscarRating: data.oscarRating,
             jensRating: data.jensRating,
             dumstreiRating: data.dumstreiRating,
+            evaRating: data.evaRating,
             timestamp: data.timestamp,
           };
         });
@@ -167,6 +185,7 @@ export default {
             oscarRating: data.oscarRating,
             jensRating: data.jensRating,
             dumstreiRating: data.dumstreiRating,
+            evaRating: data.evaRating,
           };
         });
       } catch (error) {
@@ -188,7 +207,7 @@ export default {
         const id = "id" + Math.random().toString(20).slice(2);
         const thumbnail = book.image ? book.image : "";
 
-       await setDoc(doc(db, "rated", id), {
+        await setDoc(doc(db, "rated", id), {
           title: book.title,
           pages: book.pages || null,
           suggester: book.suggester,
@@ -198,6 +217,7 @@ export default {
           oscarRating: this.oscarRating,
           jensRating: this.jensRating,
           dumstreiRating: this.dumstreiRating,
+          evaRating: this.evaRating,
           timestamp: Date.now(),
         })
           .then(() => {
@@ -232,15 +252,14 @@ export default {
             this.oscarRating = "";
             this.jensRating = "";
             this.dumstreiRating = "";
+            this.evaRating = "";
 
-            this.closeModalAndAddToHat(); 
-            
-            
+            this.closeModalAndAddToHat();
           })
           .catch((error) => {
             console.error("Error rating the book:", error);
           });
-          await this.rateBooks();
+        await this.rateBooks();
       } else {
         console.error("Suggester name is required.");
       }
@@ -253,6 +272,7 @@ export default {
         book.oscarRating,
         book.jensRating,
         book.dumstreiRating,
+        book.evaRating,
       ];
 
       const validRatings = ratings.filter(
@@ -270,9 +290,8 @@ export default {
     },
     sortReadAndRatedBooks() {
       switch (this.sortOption) {
-
         case "default":
-      break;
+          break;
 
         case "highestScore":
           this.readAndRated.sort((a, b) => {
@@ -288,7 +307,7 @@ export default {
           });
           break;
 
-          case "pages":
+        case "pages":
           this.sortByNumeric("pages");
           break;
 
@@ -310,6 +329,10 @@ export default {
 
         case "dumstreiRating":
           this.sortByRating("dumstreiRating");
+          break;
+
+        case "evaRating":
+          this.sortByRating("evaRating");
           break;
 
         case "suggester":
@@ -344,8 +367,7 @@ export default {
   margin-bottom: 20px;
   position: relative;
   z-index: 101;
-   animation: headingAnimation 1s ease-in-out forwards;
-
+  animation: headingAnimation 1s ease-in-out forwards;
 }
 
 label {
@@ -504,6 +526,33 @@ input {
   padding: 20px;
   border-radius: 8px;
   z-index: 110;
+}
+
+@media (min-width: 780px) {
+  .modal-content {
+    max-width: 40%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  label {
+  margin-right: 8px;
+  font-weight: bold;
+  margin-bottom: 5px; 
+}
+
+input {
+  width: 90%; 
+  height: 40px;
+  margin: 5px 0; 
+  padding: 10px;
+  font-size: 16px;
+  box-shadow: 2px 2px 8px #959595;
+  border: solid 1px;
+  border-radius: 7px;
+  font-family: "Quicksand", sans-serif;
+}
 }
 
 /* Media queries */
