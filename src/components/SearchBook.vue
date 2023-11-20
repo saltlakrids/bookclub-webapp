@@ -254,7 +254,7 @@ form {
 
 .close-button {
   position: absolute;
-  top: 28%;
+  top: 32%;
   left: 51%;
   font-size: 20px;
   background: none;
@@ -301,6 +301,8 @@ form {
   z-index: 110;
 }
 
+
+
 /* Media queries */
 @media (max-width: 768px) {
   .book-item {
@@ -317,6 +319,19 @@ form {
   color: #fff; 
 }
   
+}
+
+@media (max-width: 375px) {
+  .close-button {
+  position: absolute;
+  top: 32%;
+  left: 53%;
+  font-size: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #fff; 
+}
 }
 
 .name-list {

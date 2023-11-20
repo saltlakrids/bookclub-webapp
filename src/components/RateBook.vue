@@ -296,6 +296,7 @@ export default {
 
     calculateAverageRating(book) {
       const ratings = [
+        
         book.chrisRating,
         book.frederikRating,
         book.oscarRating,
