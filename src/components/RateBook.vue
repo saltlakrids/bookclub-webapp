@@ -49,6 +49,16 @@
           <div class="average-rating">
             Average Rating: {{ calculateAverageRating(book) }}
           </div>
+          <br>
+          <div class="individual-ratings" v-if="book.showScores">
+          <div v-if="book.chrisRating">Chris: {{ book.chrisRating }}</div>
+          <div v-if="book.frederikRating">Frederik: {{ book.frederikRating }}</div>
+          <div v-if="book.oscarRating">Oscar: {{ book.oscarRating }}</div>
+          <div v-if="book.dumstreiRating">Dumstrei: {{ book.dumstreiRating }}</div>
+          <div v-if="book.jensRating">Jens: {{ book.jensRating }}</div>
+          <div v-if="book.evaRating">Eva: {{ book.evaRating }}</div>
+        </div>
+        <button @click="toggleScores(book)">Individual Scores</button>
         </div>
       </div>
     </div>
@@ -65,7 +75,9 @@
               id="chrisRating"
               v-model="chrisRating"
               min="1"
-              max="10"
+              :max="10"
+              step="0.5"
+              @input="validateRatingInput('chrisRating')"  
               required
             />
 
@@ -75,7 +87,9 @@
               id="frederikRating"
               v-model="frederikRating"
               min="1"
-              max="10"
+              :max="10"
+              step="0.5"
+              @input="validateRatingInput('frederikRating')"
               required
             />
 
@@ -85,7 +99,9 @@
               id="oscarRating"
               v-model="oscarRating"
               min="1"
-              max="10"
+              :max="10"
+              step="0.5"
+              @input="validateRatingInput('oscarRating')"  
               required
             />
 
@@ -95,7 +111,9 @@
               id="dumstreiRating"
               v-model="dumstreiRating"
               min="1"
-              max="10"
+              :max="10"
+              step="0.5"
+              @input="validateRatingInput('dumstreiRating')"  
               required
             />
 
@@ -104,8 +122,10 @@
               type="number"
               id="jensRating"
               v-model="jensRating"
-              min="1"
-              max="10"
+          
+              :max="10"
+              step="0.5"
+              @input="validateRatingInput('jensRating')"  
             />
 
             <label for="evaRating">Eva:</label>
@@ -113,8 +133,10 @@
               type="number"
               id="evaRating"
               v-model="evaRating"
-              min="1"
-              max="10"
+         
+              :max="10"
+              step="0.5"
+              @input="validateRatingInput('evaRating')"  
             />
           </div>
           <button @click="rateBook(selectedBook)">Save rating</button>
@@ -143,13 +165,24 @@ export default {
       chrisRating: 1,
       frederikRating: 1,
       oscarRating: 1,
-      jensRating: 1,
+      jensRating: 0,
       dumstreiRating: 1,
-      evaRating: 1,
+      evaRating: 0,
       sortOption: "default",
     };
   },
   methods: {
+
+    validateRatingInput(ratingKey) {
+    let rating = parseFloat(this[ratingKey]);
+
+    if (!isNaN(rating)) {
+      rating = Math.max(1, Math.min(10, rating));
+
+      this[ratingKey] = parseFloat(rating.toFixed(1));
+    }
+  },
+
     async rateBooks() {
       try {
         const waitingSnapshot = await getDocs(collection(db, "ratings"));
@@ -168,6 +201,7 @@ export default {
             dumstreiRating: data.dumstreiRating,
             evaRating: data.evaRating,
             timestamp: data.timestamp,
+            showScores: false,
           };
         });
 
@@ -186,11 +220,16 @@ export default {
             jensRating: data.jensRating,
             dumstreiRating: data.dumstreiRating,
             evaRating: data.evaRating,
+            showScores: false,
           };
         });
       } catch (error) {
         console.error("Error fetching books:", error);
       }
+    },
+
+    toggleScores(book) {
+      book.showScores = !book.showScores;
     },
 
     openModal(book) {
@@ -207,6 +246,7 @@ export default {
         const id = "id" + Math.random().toString(20).slice(2);
         const thumbnail = book.image ? book.image : "";
 
+        try {
         await setDoc(doc(db, "rated", id), {
           title: book.title,
           pages: book.pages || null,
@@ -220,50 +260,39 @@ export default {
           evaRating: this.evaRating,
           timestamp: Date.now(),
         })
-          .then(() => {
-            console.log("Book rated");
+        const ratingsDocRef = doc(db, "ratings", book.id);
+      await deleteDoc(ratingsDocRef);
 
-            const ratingsDocRef = doc(db, "ratings", book.id);
-            deleteDoc(ratingsDocRef)
-              .then(() => {
-                console.log("Book removed from ratings");
-              })
-              .catch((error) => {
-                console.error("Error removing book from ratings:", error);
-              });
-
-            const index = this.waitingToBeRated.findIndex(
-              (b) => b.id === book.id
-            );
-            if (index !== -1) {
-              this.waitingToBeRated.splice(index, 1);
-            }
-
-            this.readAndRated.unshift({
-              id: id,
-              title: book.title,
-              pages: book.pages || null,
-              suggester: book.suggester,
-              image: thumbnail,
-            });
-
-            this.chrisRating = "";
-            this.frederikRating = "";
-            this.oscarRating = "";
-            this.jensRating = "";
-            this.dumstreiRating = "";
-            this.evaRating = "";
-
-            this.closeModalAndAddToHat();
-          })
-          .catch((error) => {
-            console.error("Error rating the book:", error);
-          });
-        await this.rateBooks();
-      } else {
-        console.error("Suggester name is required.");
+      const index = this.waitingToBeRated.findIndex((b) => b.id === book.id);
+      if (index !== -1) {
+        this.waitingToBeRated.splice(index, 1);
       }
-    },
+
+      this.readAndRated.unshift({
+        id: id,
+        title: book.title,
+        pages: book.pages || null,
+        suggester: book.suggester,
+        image: thumbnail,
+      });
+
+      this.chrisRating = "";
+      this.frederikRating = "";
+      this.oscarRating = "";
+      this.jensRating = "";
+      this.dumstreiRating = "";
+      this.evaRating = "";
+
+      this.closeModalAndAddToHat();
+      await this.rateBooks();
+    } catch (error) {
+      console.error("Error rating the book:", error);
+    }
+  
+  } else {
+    console.error("Suggester name is required.");
+  }
+},
 
     calculateAverageRating(book) {
       const ratings = [
@@ -464,6 +493,22 @@ input {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.individual-ratings {
+  background-color: rgba(255, 255, 255, 0.8); 
+  border: 1px solid #959595;
+  border-radius: 8px;
+  padding: 10px;
+  margin-top: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: background-color 0.3s ease-in-out;
+  max-width: 200px;
+  margin: 0 auto;
+}
+
+.individual-ratings div {
+  margin-bottom: 5px;
 }
 
 .search {
