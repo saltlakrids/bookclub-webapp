@@ -497,7 +497,7 @@ input {
 }
 
 .individual-ratings {
-  background-color: rgba(255, 255, 255, 0.8); 
+  background-color: rgba(54, 54, 54, 0.521); 
   border: 1px solid #959595;
   border-radius: 8px;
   padding: 10px;

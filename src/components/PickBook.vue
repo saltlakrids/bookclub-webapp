@@ -74,7 +74,6 @@
 <script>
 import { ref, onMounted, onUnmounted, } from "vue";
 import { Fireworks } from "fireworks-js";
-import { getAuth, onAuthStateChanged } from "firebase/auth";
 import {
   collection,
   getDocs,
@@ -88,7 +87,6 @@ import { db } from "../firebase/init";
 const books = ref([]);
 const totalBooks = ref(0);
 const isTotalBooksClicked = ref(true);
-let isAuthenticated = false;
 let booksv2 = [];
 const fireworks = ref(null);
 const showTotalBooks = ref(false);
@@ -96,10 +94,7 @@ const showTotalBooks = ref(false);
 export default {
   setup() {
     const fireworksContainer = ref(null);
-    const auth = getAuth();
-    onAuthStateChanged(auth, (user) => {
-      isAuthenticated = !!user;
-    });
+
 
 
     onMounted(async () => {
@@ -253,11 +248,7 @@ export default {
     },
 
     async pickRandomBook() {
-      if (!isAuthenticated) {
-        console.error("User is not authenticated.");
-        return;
-      }
-
+  
       if (!db) {
         console.error("Firestore not initialized");
         return;
