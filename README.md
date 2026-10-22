@@ -5,7 +5,7 @@ The Slow Guys Book Club: put books in the hat, let the hat pick the next one, an
 A Vue 3 frontend with a small Node server (`server/`) that keeps everything in SQLite. It runs on a Raspberry Pi behind `tailscale serve`, which also handles sign in.
 
 ## How sign in works
-The server only listens on localhost. `tailscale serve` proxies to it and tells it which Tailscale user is asking. The first time someone opens the app they pick which member they are (Chris, Dumstrei, Frederik or Oscar), and that choice is tied to their Tailscale login. Friends outside your tailnet need the Pi shared with them in the Tailscale admin console.
+The server only listens on localhost. `tailscale serve` proxies to it and tells it which Tailscale user is asking. The first time someone opens the app they pick which member they are (Chris, Dumstrei, Frederik or Oscar), and that choice is tied to their Tailscale login. Friends outside your tailnet need the Pi shared with them in the Tailscale admin console. [docs/joining.md](docs/joining.md) has the steps and a guide to send them.
 
 Ratings stay hidden until all four have rated (or skipped) a book. Then the book moves to "Read and rated" with everyone's scores.
 
