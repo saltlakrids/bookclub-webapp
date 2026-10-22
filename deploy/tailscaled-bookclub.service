@@ -1,0 +1,36 @@
+# A second Tailscale node on the Pi, called "bookclub", so the app gets its own
+# address (https://bookclub.<tailnet>.ts.net) and can be shared on its own.
+# It runs in userspace mode next to the main tailscaled and only proxies to
+# the book club server on 127.0.0.1:8100.
+
+[Unit]
+Description=Tailscale node for the book club
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User=bookclub
+Group=bookclub
+ExecStart=/usr/sbin/tailscaled --tun=userspace-networking --port=0 --statedir=/var/lib/tailscale-bookclub --state=/var/lib/tailscale-bookclub/tailscaled.state --socket=/run/tailscale-bookclub/tailscaled.sock
+Restart=on-failure
+RestartSec=5
+
+StateDirectory=tailscale-bookclub
+StateDirectoryMode=0700
+RuntimeDirectory=tailscale-bookclub
+RuntimeDirectoryMode=0755
+
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+
+[Install]
+WantedBy=multi-user.target

@@ -5,7 +5,7 @@ The Slow Guys Book Club: put books in the hat, let the hat pick the next one, an
 A Vue 3 frontend with a small Node server (`server/`) that keeps everything in SQLite. It runs on a Raspberry Pi behind `tailscale serve`, which also handles sign in.
 
 ## How sign in works
-The server only listens on localhost. `tailscale serve` proxies to it and tells it which Tailscale user is asking. The first time someone opens the app they pick which member they are (Chris, Dumstrei, Frederik or Oscar), and that choice is tied to their Tailscale login. Friends outside your tailnet need the Pi shared with them in the Tailscale admin console. [docs/joining.md](docs/joining.md) has the steps and a guide to send them.
+The server only listens on localhost. The Pi runs a second Tailscale node called `bookclub` (next to the main one) whose `tailscale serve` proxies to it and tells it which Tailscale user is asking. The first time someone opens the app they pick which member they are (Chris, Dumstrei, Frederik or Oscar), and that choice is tied to their Tailscale login. Friends outside your tailnet need the Pi shared with them in the Tailscale admin console. [docs/joining.md](docs/joining.md) has the steps and a guide to send them.
 
 Ratings stay hidden until all four have rated (or skipped) a book. Then the book moves to "Read and rated" with everyone's scores.
 
@@ -47,7 +47,8 @@ This builds the app, copies it to `homepi` (set `BOOKCLUB_HOST` to change that) 
 | Database | `/var/lib/bookclub/bookclub.db` |
 | Settings | `/etc/bookclub/bookclub.env` (`GOOGLE_BOOKS_API_KEY` is optional) |
 | Service | `systemctl status bookclub`, logs with `journalctl -u bookclub` |
-| URL | `https://homepi.<tailnet>.ts.net:10000` |
+| URL | `https://bookclub.<tailnet>.ts.net` |
+| Tailscale node | `tailscaled-bookclub` service, use `sudo tailscale --socket=/run/tailscale-bookclub/tailscaled.sock ...` |
 
 Member admin on the Pi:
 ```

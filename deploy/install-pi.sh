@@ -9,7 +9,6 @@ APP_DIR=/opt/bookclub
 ENV_FILE=/etc/bookclub/bookclub.env
 DB_FILE=/var/lib/bookclub/bookclub.db
 PORT=8100
-HTTPS_PORT=10000
 
 node -e 'const [major, minor] = process.versions.node.split(".").map(Number); process.exit(major > 22 || (major === 22 && minor >= 13) ? 0 : 1)' \
   || { echo "Node 22.13 or newer is needed for node:sqlite"; exit 1; }
@@ -63,10 +62,24 @@ for _ in $(seq 1 20); do
 done
 curl -fsS "http://127.0.0.1:$PORT/api/me" >/dev/null || { sudo journalctl -u bookclub -n 30 --no-pager; exit 1; }
 
-# Only adds the book club, the other serve entries stay as they are
-if ! sudo tailscale serve status --json | grep -q ":$HTTPS_PORT\""; then
-  sudo tailscale serve --bg --https="$HTTPS_PORT" "http://127.0.0.1:$PORT"
-fi
+# The book club has its own Tailscale node, "bookclub", running next to the main one
+TS_BOOKCLUB="sudo tailscale --socket=/run/tailscale-bookclub/tailscaled.sock"
+sudo install -m 644 "$APP_DIR/deploy/tailscaled-bookclub.service" /etc/systemd/system/tailscaled-bookclub.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now tailscaled-bookclub >/dev/null 2>&1
+sleep 2
 
 sudo rm -rf "$APP_DIR.old"
-echo "Book club is running: https://$(tailscale status --json | node -pe 'JSON.parse(require("fs").readFileSync(0)).Self.DNSName.replace(/\.$/, "")'):$HTTPS_PORT"
+
+if ! $TS_BOOKCLUB status >/dev/null 2>&1; then
+  echo "The bookclub Tailscale node is not logged in yet. Log it in with:"
+  echo "  $TS_BOOKCLUB up --hostname=bookclub --accept-dns=false"
+  echo "then run this script again."
+  exit 0
+fi
+
+if ! $TS_BOOKCLUB serve status --json | grep -q "127.0.0.1:$PORT"; then
+  $TS_BOOKCLUB serve --bg --https=443 "http://127.0.0.1:$PORT"
+fi
+
+echo "Book club is running: https://$($TS_BOOKCLUB status --json | node -pe 'JSON.parse(require("fs").readFileSync(0)).Self.DNSName.replace(/\.$/, "")')"

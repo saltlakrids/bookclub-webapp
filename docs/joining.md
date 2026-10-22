@@ -2,22 +2,11 @@
 
 ## Before you send the guide (Frederik)
 
-1. **Lock the share down to the book club.** Shared users can reach every port on homepi by default, so the energy hub, the meditation app and SSH would be open to them too. In the admin console go to Access controls and replace the open "everyone can reach everything" rule with these two:
+1. **Share the bookclub machine, not homepi.** The book club has its own Tailscale machine called "bookclub", which only serves the app. Admin console → Machines → bookclub → ⋯ → Share → Copy invite link. Turn on "Reusable link" so one link works for all three, and paste it into the guide below. Treat it like a password, and turn it off once everyone has joined. Unused links expire after 30 days.
 
-   ```json
-   "grants": [
-     // You and your own devices, as before
-     { "src": ["autogroup:member"], "dst": ["*"], "ip": ["*"] },
-     // People homepi is shared with: the book club only
-     { "src": ["autogroup:shared"], "dst": ["*"], "ip": ["tcp:10000"] }
-   ]
-   ```
+   Sharing bookclub instead of homepi means the energy hub, the meditation app and SSH stay out of reach. If you added an `autogroup:shared` rule limited to port 10000 earlier, change it to `tcp:443` or remove it, otherwise it blocks the new address.
 
-   If your policy file uses the older `"acls"` format, the same idea is
-   `{ "action": "accept", "src": ["autogroup:member"], "dst": ["*:*"] }` and
-   `{ "action": "accept", "src": ["autogroup:shared"], "dst": ["*:10000"] }`.
-
-2. **Make a share link.** Admin console → Machines → homepi → ⋯ → Share → Copy invite link. Turn on "Reusable link" so one link works for all three, and paste it into the guide below. Treat it like a password, and turn it off once everyone has joined. Unused links expire after 30 days.
+2. **Turn off key expiry for bookclub** (Machines → bookclub → ⋯ → Disable key expiry), so it does not log itself out after 180 days.
 
 3. **Check who has joined** once they have opened the app:
 
@@ -38,7 +27,7 @@
 > - Leave Tailscale switched on. It's fine to keep it on all the time.
 >
 > **2. Open the book club**
-> - Go to https://homepi.taila9758a.ts.net:10000
+> - Go to https://bookclub.taila9758a.ts.net
 > - The hat asks "Who are you?". Pick your own name and tap "That's me". You only do this once, so pick the right one 😉
 > - Tip: add the page to your home screen (Share → Add to Home Screen on iPhone, ⋮ → Add to Home screen on Android).
 >
