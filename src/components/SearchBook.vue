@@ -259,16 +259,6 @@ form {
   visibility: hidden;
 }
 
-.close-button {
-  position: absolute;
-  top: 32%;
-  left: 51%;
-  font-size: 20px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #fff; 
-}
 
 .searchAnimation {
   animation: searchAnimation 1s ease-in-out forwards;
@@ -301,7 +291,33 @@ form {
   z-index: 110;
 }
 
+.close-button {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  font-size: 28px;
+  line-height: 1;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #333;
+  text-shadow: none;
+  z-index: 10;
+}
+
+.close-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
 .modal-content {
+  position: relative;
+  box-sizing: border-box;
+  max-width: calc(100vw - 32px);
   background: #C8BFE7;
   padding: 20px;
   border-radius: 8px;
@@ -315,30 +331,7 @@ form {
   .book-item {
     width: 100%; 
   }
-  .close-button {
-  position: absolute;
-  top: 35%;
-  left: 50%;
-  font-size: 20px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #fff; 
-}
   
-}
-
-@media (max-width: 375px) {
-  .close-button {
-  position: absolute;
-  top: 32%;
-  left: 53%;
-  font-size: 20px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #fff; 
-}
 }
 
 .name-list {

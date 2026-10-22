@@ -388,17 +388,6 @@ input {
   visibility: hidden;
 }
 
-.close-button {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 20px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: #fff;
-  z-index: 10;
-}
 
 .searchAnimation {
   animation: searchAnimation 1s ease-in-out forwards;
@@ -438,8 +427,33 @@ input {
   z-index: 110;
 }
 
+.close-button {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 36px;
+  height: 36px;
+  margin: 0;
+  padding: 0;
+  font-size: 28px;
+  line-height: 1;
+  background: none;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #333;
+  text-shadow: none;
+  z-index: 10;
+}
+
+.close-button:hover {
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
 .modal-content {
   position: relative;
+  box-sizing: border-box;
+  max-width: calc(100vw - 32px);
   background: #c8bfe7;
   padding: 20px;
   border-radius: 8px;
@@ -479,16 +493,5 @@ input {
     width: 100%;
   }
 
-  .close-button {
-    position: absolute;
-    top: 5px;
-    right: -45px;
-    font-size: 20px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #fff;
-    z-index: 10;
-  }
 }
 </style>
