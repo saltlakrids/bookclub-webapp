@@ -4,9 +4,32 @@
     <router-link to="/search">Add Book</router-link> |
     <!-- <router-link to="/add">Add Book</router-link> | -->
     <router-link to="/rate">Rate Book</router-link>  
+    <div v-if="session.member" class="signed-in">Signed in as {{ session.member.name }}</div>
   </nav>
-  <router-view/>
+  <template v-if="session.loaded">
+    <router-view v-if="session.member"/>
+    <WhoAreYou v-else/>
+  </template>
 </template>
+
+<script>
+import WhoAreYou from "@/components/WhoAreYou.vue";
+import { session, loadSession } from "@/api";
+
+export default {
+  components: {
+    WhoAreYou,
+  },
+  data() {
+    return {
+      session,
+    };
+  },
+  created() {
+    loadSession();
+  },
+};
+</script>
 
 <style>
 
@@ -127,6 +150,12 @@ nav a {
   text-decoration: none;
   z-index: 2;
   position: relative;
+}
+
+.signed-in {
+  font-size: 13px;
+  margin-top: 8px;
+  opacity: 0.8;
 }
 
 nav a.router-link-exact-active {

@@ -74,15 +74,7 @@
 <script>
 import { ref, onMounted, onUnmounted, } from "vue";
 import { Fireworks } from "fireworks-js";
-import {
-  collection,
-  getDocs,
-  doc,
-  getDoc,
-  deleteDoc,
-  setDoc,
-} from "firebase/firestore";
-import { db } from "../firebase/init";
+import api, { errorMessage } from "@/api";
 
 export default {
   setup() {
@@ -181,17 +173,11 @@ export default {
 
   async created() {
     try {
-      const querySnapshot = await getDocs(collection(db, "books"));
-      this.books = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        title: doc.data().title,
-        pages: doc.data().pages,
-        suggester: doc.data().suggester,
-        image: doc.data().image,
-      }));
+      const { data } = await api.get("/books");
+      this.books = data.hat;
     } catch (error) {
       console.error("Error fetching books:", error);
-      this.error = error.message;
+      this.error = errorMessage(error);
     }
   },
 
@@ -245,50 +231,22 @@ export default {
     async pickRandomBook() {
       this.isLoading = true;
       try {
-        if (this.books.length === 0) {
-          console.error("No books to pick from.");
-          this.showNoBooksMessage = true;
-          return;
-        }
-        const randomIndex = Math.floor(Math.random() * this.books.length);
-        const selectedBookRef = doc(collection(db, "books"), this.books[randomIndex].id);
-
-        const bookSnapshot = await getDoc(selectedBookRef);
-        if (!bookSnapshot.exists()) {
-          // Someone else picked or removed it in the meantime
-          this.books.splice(randomIndex, 1);
-          this.error = "That book was already picked, try again.";
-          return;
-        }
-        const selectedBook = {
-          id: bookSnapshot.id,
-          title: bookSnapshot.data().title,
-          pages: bookSnapshot.data().pages,
-          suggester: bookSnapshot.data().suggester,
-          image: bookSnapshot.data().image,
-        };
-
-        await this.addBookToRatings(selectedBook);
-        await deleteDoc(selectedBookRef);
-
-        this.books.splice(randomIndex, 1);
-        this.book = selectedBook;
+        // The server does the draw, so two people picking at once cannot get the same book
+        const { data } = await api.post("/pick", {});
+        this.books = this.books.filter((book) => book.id !== data.id);
+        this.book = data;
         this.error = null;
       } catch (error) {
         console.error("Error picking book:", error);
-        this.error = error.message;
+        if (error.response?.status === 409) {
+          this.books = [];
+          this.showNoBooksMessage = true;
+        } else {
+          this.error = errorMessage(error);
+        }
       } finally {
         this.isLoading = false;
       }
-    },
-
-    async addBookToRatings(selectedBook) {
-      await setDoc(doc(collection(db, "ratings"), selectedBook.id), {
-        title: selectedBook.title,
-        pages: selectedBook.pages || null,
-        suggester: selectedBook.suggester,
-        image: selectedBook.image || "",
-      });
     },
 
     toggleTotalBooks() {

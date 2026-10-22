@@ -5,16 +5,18 @@
       <input class="search searchAnimation" v-model="searchQuery" @input="searchBooks" placeholder="Enter book title" />
       <div class="book-list">
         <div v-for="book in books" :key="book.id" class="book-item">
-          <img v-if="book.volumeInfo.imageLinks" :src="book.volumeInfo.imageLinks.smallThumbnail" alt="Book Cover" />
+          <img v-if="book.image" :src="book.image" alt="Book Cover" />
           <div v-else class="no-cover">No Cover Available</div>
-          <div class="book-title">{{ book.volumeInfo.title }}</div>
-          <div v-if="book.volumeInfo.pageCount" class="page-count">{{ book.volumeInfo.pageCount }} pages</div>
+          <div class="book-title">{{ book.title }}</div>
+          <div v-if="book.authors.length" class="book-authors">{{ book.authors.join(", ") }}</div>
+          <div v-if="book.pages" class="page-count">{{ book.pages }} pages</div>
           <button @click="openModal(book)">Add to Hat</button>
         </div>
       </div>
       <div v-if="addedToHat" class="added-to-hat-message">
         Book added to the hat!
       </div>
+      <div v-if="error" class="error-message">{{ error }}</div>
     </div>
     <img class="addHat hatAnimation" alt="The Hat" src="../assets/theHat.png" />
   </div>
@@ -25,32 +27,33 @@
           <button type="button" class="close-button" @click="closeModal">&times;</button>
           <select class="name-list" v-model="suggesterName" required>
             <option disabled value="">Select a name</option>
-            <option v-for="name in suggesterNames" :key="name" :value="name">
+            <option v-for="name in session.members" :key="name" :value="name">
               {{ name }}
             </option>
           </select>
-          <button type="submit">Save</button>
+          <button type="submit" :disabled="isSaving">Save</button>
         </form>
       </div>
     </div>
 </template>
 
 <script>
-import { db } from '../firebase/init';
-import { doc, setDoc } from "firebase/firestore"; 
+import api, { session, errorMessage } from "@/api";
 
 
 export default {
   data() {
     return {
+      session,
       searchQuery: '',
       books: [],
       addedToHat: false,
+      error: '',
       searchTimeout: null,
       isModalOpen: false,
+      isSaving: false,
       selectedBook: null,
       suggesterName: '',
-      suggesterNames: ['Chris', 'Dumstrei', 'Frederik', 'Oscar'],
     };
   },
   methods: {
@@ -61,40 +64,29 @@ export default {
         clearTimeout(this.searchTimeout);
       }
       
-
-      
       this.searchTimeout = setTimeout(() => {
-      const apiKey = process.env.VUE_APP_GOOGLE_BOOKS_API_KEY;
-      // The key is optional, Google Books also answers without one (lower quota)
-      const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(this.searchQuery)}` + (apiKey ? `&key=${apiKey}` : '');
+      const query = this.searchQuery.trim();
       
       this.books = []; 
       this.addedToHat = false;
+      this.error = '';
       
-      if (this.searchQuery.trim().length > 2) {
-        this.$axios.get(apiUrl)
+      if (query.length > 2) {
+        api.get('/search', { params: { q: query } })
           .then(response => {
-            this.books = response.data.items || [];
+            // Ignore answers to an older search
+            if (query !== this.searchQuery.trim()) {
+              return;
+            }
+            this.books = response.data;
         
-          this.books.sort((a, b) => {
-              const thumbnailA = a.volumeInfo.imageLinks?.smallThumbnail ? 1 : 0;
-              const thumbnailB = b.volumeInfo.imageLinks?.smallThumbnail ? 1 : 0;
-              const pageCountA = a.volumeInfo.pageCount || 0;
-              const pageCountB = b.volumeInfo.pageCount || 0;
-              const titleA = a.volumeInfo.title || '';
-              const titleB = b.volumeInfo.title || '';
-
-              if (thumbnailB !== thumbnailA) {
-                return thumbnailB - thumbnailA;
-              } else if (pageCountB !== pageCountA) {
-                return pageCountB - pageCountA;
-              } else {
-                return titleA.localeCompare(titleB);
-            }})
+          // Books with a cover first, otherwise keep the search relevance order
+          this.books.sort((a, b) => (b.image ? 1 : 0) - (a.image ? 1 : 0));
           })
 
           .catch(error => {
             console.error('Error fetching books:', error);
+            this.error = errorMessage(error);
           });
       }
     }, 500);
@@ -103,6 +95,7 @@ export default {
   
   openModal(book) {
     this.selectedBook = book;
+    this.suggesterName = session.member ? session.member.name : '';
     this.isModalOpen = true;
   },
 
@@ -110,44 +103,32 @@ export default {
       this.isModalOpen = false;
     },
 
+    async addToHat(book) {
+      if (!book || !this.suggesterName || this.isSaving) {
+        return;
+      }
 
-    addToHat(book) {
-      
-      if (book){
-
-  
-      // const suggesterName = window.prompt('Enter your first name:');
-
-      if (this.suggesterName) {
-      const id = "id" + Math.random().toString(20).slice(2);
-
-       const thumbnail = book.volumeInfo.imageLinks
-       ? book.volumeInfo.imageLinks.smallThumbnail
-       : '';
-
-      setDoc(doc(db, "books", id), {
-        title: book.volumeInfo.title,
-        pages: book.volumeInfo.pageCount || null,
-        suggester: this.suggesterName,
-        image: thumbnail,
-      })
-      .then(() => {
-        console.log('Book added to the hat!');
+      this.isSaving = true;
+      try {
+        await api.post('/books', {
+          title: book.title,
+          pages: book.pages || null,
+          image: book.image || null,
+          suggester: this.suggesterName,
+        });
         this.addedToHat = true;
         this.searchQuery = '';
         this.books = [];
         this.suggesterName = '';
         this.closeModal();
-      })
-      .catch(error => {
+      } catch (error) {
         console.error('Error adding book to the hat:', error);
-      });
-    }
-    else {
-    console.error('Suggester name is required.');
-  }
-    }
-  },
+        this.error = errorMessage(error);
+        this.closeModal();
+      } finally {
+        this.isSaving = false;
+      }
+    },
   },
 
 };
@@ -173,6 +154,18 @@ export default {
 .book-title {
   margin-top: 10px;
   font-size: 14px;
+}
+
+.book-authors {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.error-message {
+  position: relative;
+  color: #ff0000;
+  margin-top: 10px;
+  z-index: 100;
 }
 
 .added-to-hat-message {

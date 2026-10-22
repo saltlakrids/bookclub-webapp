@@ -9,11 +9,12 @@
       <br />
       <input v-model="pages" type="number" placeholder="Number of pages" />
       <br />
-      <input
-        v-model="suggester"
-        type="text"
-        placeholder="Who suggested the book"
-      />
+      <select v-model="suggester">
+        <option disabled value="">Who suggested the book</option>
+        <option v-for="name in session.members" :key="name" :value="name">
+          {{ name }}
+        </option>
+      </select>
       <br />
       <button class="button buttonAnimation" @click.prevent="addBook">
         Add to the hat
@@ -28,16 +29,16 @@
 </template>
 
 <script>
-import { db } from "../firebase/init";
-import { doc, setDoc } from "firebase/firestore";
+import api, { session, errorMessage } from "@/api";
 
 export default {
   name: "add-book",
   data() {
     return {
+      session,
       title: "",
       pages: "",
-      suggester: "",
+      suggester: session.member ? session.member.name : "",
       added: false,
       error: "",
     };
@@ -49,23 +50,19 @@ export default {
         return;
       }
 
-      var id = "id" + Math.random().toString(20).slice(2);
-
       try {
-        await setDoc(doc(db, "books", id), {
+        await api.post("/books", {
           title: this.title,
           pages: Number(this.pages),
           suggester: this.suggester,
-          image: "",
         });
       } catch (error) {
         console.error("Error adding book:", error);
-        this.error = "Could not add the book, try again.";
+        this.error = errorMessage(error);
         return;
       }
       this.title = "";
       this.pages = "";
-      this.suggester = "";
       this.added = true;
       this.error = "";
     },
@@ -88,7 +85,8 @@ form {
   position: relative;
 }
 
-input {
+input,
+select {
   width: 300px;
   height: 40px;
   margin: 10px 0;

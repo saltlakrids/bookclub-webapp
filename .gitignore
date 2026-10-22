@@ -25,3 +25,6 @@ pnpm-debug.log*
 
 # Personal data exports
 *.xlsx
+
+# Local SQLite databases
+/data

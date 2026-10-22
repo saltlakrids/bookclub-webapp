@@ -16,7 +16,16 @@
             <div v-if="book.pages" class="page-count">
               {{ book.pages }} pages
             </div>
-            <button @click="openModal(book)">Rate</button>
+            <div v-if="book.suggester" class="book-suggester">{{ book.suggester }}</div>
+            <div class="rating-status">
+              <div v-if="book.myRating">
+                {{ book.myRating.skipped ? "You skipped this one" : `Your rating: ${book.myRating.score}` }}
+              </div>
+              <div>Waiting for {{ book.waitingFor.join(", ") }}</div>
+            </div>
+            <button @click="openModal(book)">
+              {{ book.myRating ? "Change rating" : "Rate" }}
+            </button>
           </div>
         </template>
         <template v-else>
@@ -31,12 +40,9 @@
           <option value="alphabetical">Alphabetical</option>
           <option value="suggester">Suggester Name</option>
           <option value="pages">Number of Pages</option>
-          <option value="frederik">Frederik's Rating</option>
-          <option value="chrisRating">Chris's Rating</option>
-          <option value="oscarRating">Oscar's Rating</option>
-          <option value="dumstreiRating">Dumstrei's Rating</option>
-          <option value="evaRating">Eva's Rating</option>
-          <option value="jensRating">Jens's Rating</option>
+          <option v-for="name in raters" :key="name" :value="`rating:${name}`">
+            {{ name }}'s Rating
+          </option>
         </select>
       </div>
       <div class="book-list read">
@@ -46,17 +52,17 @@
           <div class="book-title">{{ book.title }}</div>
           <div v-if="book.pages" class="page-count">{{ book.pages }} pages</div>
           <div class="book-suggester">{{ book.suggester }}</div>
+          <div v-if="book.finishedAt" class="book-finished">
+            Finished {{ formatMonth(book.finishedAt) }}
+          </div>
           <div class="average-rating">
             Average Rating: {{ calculateAverageRating(book) }}
           </div>
           <br>
           <div class="individual-ratings" v-if="book.showScores">
-          <div v-if="book.chrisRating">Chris: {{ book.chrisRating }}</div>
-          <div v-if="book.frederikRating">Frederik: {{ book.frederikRating }}</div>
-          <div v-if="book.oscarRating">Oscar: {{ book.oscarRating }}</div>
-          <div v-if="book.dumstreiRating">Dumstrei: {{ book.dumstreiRating }}</div>
-          <div v-if="book.jensRating">Jens: {{ book.jensRating }}</div>
-          <div v-if="book.evaRating">Eva: {{ book.evaRating }}</div>
+          <div v-for="rating in book.ratings" :key="rating.member">
+            {{ rating.member }}: {{ rating.score === null ? "skipped" : rating.score }}
+          </div>
         </div>
         <button @click="toggleScores(book)">Individual Scores</button>
         </div>
@@ -66,58 +72,28 @@
     <div v-if="isModalOpen" class="modal">
       <div class="modal-content">
         <h2>Rate Book</h2>
-        <form @submit.prevent="rateBook(selectedBook)">
+        <form @submit.prevent="rateBook(selectedBook, myRating)">
           <button type="button" class="close-button" @click="closeModal">&times;</button>
+          <p class="modal-book">{{ selectedBook.title }}</p>
           <div class="rating-inputs">
-            <label for="chrisRating">Chris:</label>
+            <label for="myRating">{{ session.member.name }}:</label>
             <input
               type="number"
-              id="chrisRating"
-              v-model="chrisRating"
+              id="myRating"
+              v-model="myRating"
               min="1"
-              :max="10"
+              max="10"
               step="0.5"
-              @input="validateRatingInput('chrisRating')"  
-              required
-            />
-
-            <label for="frederikRating">Frederik:</label>
-            <input
-              type="number"
-              id="frederikRating"
-              v-model="frederikRating"
-              min="1"
-              :max="10"
-              step="0.5"
-              @input="validateRatingInput('frederikRating')"
-              required
-            />
-
-            <label for="oscarRating">Oscar:</label>
-            <input
-              type="number"
-              id="oscarRating"
-              v-model="oscarRating"
-              min="1"
-              :max="10"
-              step="0.5"
-              @input="validateRatingInput('oscarRating')"  
-              required
-            />
-
-            <label for="dumstreiRating">Dumstrei:</label>
-            <input
-              type="number"
-              id="dumstreiRating"
-              v-model="dumstreiRating"
-              min="1"
-              :max="10"
-              step="0.5"
-              @input="validateRatingInput('dumstreiRating')"
+              @change="validateRatingInput('myRating')"
               required
             />
           </div>
+          <p class="hint">Scores stay hidden until everyone has rated.</p>
+          <div v-if="error" class="error">{{ error }}</div>
           <button type="submit" :disabled="isSaving">Save rating</button>
+          <button type="button" class="skip-button" :disabled="isSaving" @click="rateBook(selectedBook, null)">
+            Skip, I didn't read it
+          </button>
         </form>
       </div>
     </div>
@@ -125,36 +101,20 @@
 </template>
 
 <script>
-import { db } from "../firebase/init";
-import {
-  doc,
-  setDoc,
-  collection,
-  getDocs,
-  deleteDoc,
-} from "firebase/firestore";
-
-const RATING_KEYS = [
-  "chrisRating",
-  "frederikRating",
-  "oscarRating",
-  "jensRating",
-  "dumstreiRating",
-  "evaRating",
-];
+import api, { session, errorMessage } from "@/api";
 
 export default {
   data() {
     return {
+      session,
       waitingToBeRated: [],
       readAndRated: [],
+      raters: [],
       isModalOpen: false,
       isSaving: false,
       selectedBook: null,
-      chrisRating: "",
-      frederikRating: "",
-      oscarRating: "",
-      dumstreiRating: "",
+      myRating: "",
+      error: "",
       sortOption: "default",
     };
   },
@@ -166,43 +126,17 @@ export default {
     if (!isNaN(rating)) {
       rating = Math.max(1, Math.min(10, rating));
 
-      this[ratingKey] = parseFloat(rating.toFixed(1));
+      // Ratings go in steps of 0.5
+      this[ratingKey] = Math.round(rating * 2) / 2;
     }
   },
 
     async rateBooks() {
       try {
-        const waitingSnapshot = await getDocs(collection(db, "ratings"));
-        this.waitingToBeRated = waitingSnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            title: data.title,
-            pages: data.pages,
-            suggester: data.suggester,
-            image: data.image,
-          };
-        });
-
-        const ratedSnapshot = await getDocs(collection(db, "rated"));
-        this.readAndRated = ratedSnapshot.docs.map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            title: data.title,
-            pages: data.pages,
-            suggester: data.suggester,
-            image: data.image,
-            chrisRating: data.chrisRating,
-            frederikRating: data.frederikRating,
-            oscarRating: data.oscarRating,
-            jensRating: data.jensRating,
-            dumstreiRating: data.dumstreiRating,
-            evaRating: data.evaRating,
-            timestamp: data.timestamp || 0,
-            showScores: false,
-          };
-        });
+        const { data } = await api.get("/books");
+        this.waitingToBeRated = data.reading;
+        this.readAndRated = data.rated.map((book) => ({ ...book, showScores: false }));
+        this.raters = data.raters;
         this.sortReadAndRatedBooks();
       } catch (error) {
         console.error("Error fetching books:", error);
@@ -215,10 +149,8 @@ export default {
 
     openModal(book) {
       this.selectedBook = book;
-      this.chrisRating = "";
-      this.frederikRating = "";
-      this.oscarRating = "";
-      this.dumstreiRating = "";
+      this.myRating = book.myRating && !book.myRating.skipped ? book.myRating.score : "";
+      this.error = "";
       this.isModalOpen = true;
     },
 
@@ -226,93 +158,57 @@ export default {
       this.isModalOpen = false;
     },
 
-    async rateBook(book) {
+    // score null means skip
+    async rateBook(book, score) {
       if (!book || this.isSaving) {
         return;
       }
 
-      const id = "id" + Math.random().toString(20).slice(2);
-      const ratedBook = {
-        title: book.title,
-        pages: book.pages || null,
-        suggester: book.suggester,
-        image: book.image || "",
-        chrisRating: this.chrisRating,
-        frederikRating: this.frederikRating,
-        oscarRating: this.oscarRating,
-        dumstreiRating: this.dumstreiRating,
-        timestamp: Date.now(),
-      };
-
       this.isSaving = true;
+      this.error = "";
       try {
-        await setDoc(doc(db, "rated", id), ratedBook);
-        await deleteDoc(doc(db, "ratings", book.id));
-
-        this.waitingToBeRated = this.waitingToBeRated.filter(
-          (b) => b.id !== book.id
-        );
-        this.readAndRated.unshift({ id, ...ratedBook, showScores: false });
-        this.sortReadAndRatedBooks();
-
+        await api.put(`/books/${book.id}/rating`, { score });
         this.closeModal();
+        await this.rateBooks();
       } catch (error) {
         console.error("Error rating the book:", error);
+        this.error = errorMessage(error);
       } finally {
         this.isSaving = false;
       }
     },
 
-    // Only counts people who actually rated (0, "" and missing mean no rating)
-    averageRating(book) {
-      const ratings = RATING_KEYS.map((key) => book[key]).filter(
-        (rating) => typeof rating === "number" && rating > 0
-      );
-
-      if (ratings.length === 0) {
-        return null;
-      }
-
-      return ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length;
+    calculateAverageRating(book) {
+      return book.average === null ? "No ratings available" : book.average.toFixed(1);
     },
 
-    calculateAverageRating(book) {
-      const average = this.averageRating(book);
-      return average === null ? "No ratings available" : average.toFixed(1);
+    formatMonth(date) {
+      return new Date(date).toLocaleDateString("en-GB", { month: "long", year: "numeric" });
+    },
+
+    memberRating(book, name) {
+      const rating = book.ratings.find((r) => r.member === name);
+      return rating ? rating.score : null;
     },
 
     sortReadAndRatedBooks() {
       switch (this.sortOption) {
         case "default":
-          this.readAndRated.sort((a, b) => b.timestamp - a.timestamp);
+          this.readAndRated.sort((a, b) => (b.finishedAt || "").localeCompare(a.finishedAt || ""));
           break;
 
         case "highestScore":
-          this.readAndRated.sort((a, b) => {
-            return (this.averageRating(b) ?? -1) - (this.averageRating(a) ?? -1);
-          });
+          this.readAndRated.sort((a, b) => (b.average ?? -1) - (a.average ?? -1));
           break;
 
         case "alphabetical":
           this.readAndRated.sort((a, b) => {
-            return (a.title || "").localeCompare(b.title || "");
+            return a.title.localeCompare(b.title);
           });
           break;
 
         case "pages":
-          this.sortByNumeric("pages");
-          break;
-
-        case "frederik":
-          this.sortByNumeric("frederikRating");
-          break;
-
-        case "chrisRating":
-        case "oscarRating":
-        case "jensRating":
-        case "dumstreiRating":
-        case "evaRating":
-          this.sortByNumeric(this.sortOption);
+          this.readAndRated.sort((a, b) => (b.pages || 0) - (a.pages || 0));
           break;
 
         case "suggester":
@@ -322,13 +218,13 @@ export default {
           break;
 
         default:
+          if (this.sortOption.startsWith("rating:")) {
+            const name = this.sortOption.slice("rating:".length);
+            // Books the person did not rate go to the bottom
+            this.readAndRated.sort((a, b) => (this.memberRating(b, name) ?? -1) - (this.memberRating(a, name) ?? -1));
+          }
           break;
       }
-    },
-
-    // Books missing the value go to the bottom
-    sortByNumeric(property) {
-      this.readAndRated.sort((a, b) => (Number(b[property]) || 0) - (Number(a[property]) || 0));
     },
   },
   created() {
@@ -439,6 +335,37 @@ input {
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.rating-status {
+  font-size: 13px;
+  margin-top: 6px;
+  opacity: 0.9;
+}
+
+.book-finished {
+  font-size: 13px;
+  opacity: 0.8;
+}
+
+.modal-book {
+  font-weight: bold;
+  margin-top: 0;
+}
+
+.hint {
+  font-size: 13px;
+}
+
+.error {
+  color: #ff0000;
+  margin-bottom: 6px;
+}
+
+.skip-button {
+  background-color: transparent;
+  height: 36px;
+  font-size: 14px;
 }
 
 .individual-ratings {
