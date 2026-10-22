@@ -16,6 +16,8 @@
       <div v-if="addedToHat" class="added-to-hat-message">
         Book added to the hat!
       </div>
+      <div v-if="isSearching" class="searching-message">Searching...</div>
+      <div v-else-if="noResults" class="searching-message">No books found, try other words.</div>
       <div v-if="error" class="error-message">{{ error }}</div>
     </div>
     <img class="addHat hatAnimation" alt="The Hat" src="../assets/theHat.png" />
@@ -52,6 +54,8 @@ export default {
       searchTimeout: null,
       isModalOpen: false,
       isSaving: false,
+      isSearching: false,
+      noResults: false,
       selectedBook: null,
       suggesterName: '',
     };
@@ -70,6 +74,8 @@ export default {
       this.books = []; 
       this.addedToHat = false;
       this.error = '';
+      this.noResults = false;
+      this.isSearching = query.length > 2;
       
       if (query.length > 2) {
         api.get('/search', { params: { q: query } })
@@ -78,18 +84,24 @@ export default {
             if (query !== this.searchQuery.trim()) {
               return;
             }
+            this.isSearching = false;
             this.books = response.data;
+            this.noResults = this.books.length === 0;
         
           // Books with a cover first, otherwise keep the search relevance order
           this.books.sort((a, b) => (b.image ? 1 : 0) - (a.image ? 1 : 0));
           })
 
           .catch(error => {
+            if (query !== this.searchQuery.trim()) {
+              return;
+            }
             console.error('Error fetching books:', error);
+            this.isSearching = false;
             this.error = errorMessage(error);
           });
       }
-    }, 500);
+    }, 700);
   },
 
   
@@ -159,6 +171,12 @@ export default {
 .book-authors {
   font-size: 12px;
   opacity: 0.8;
+}
+
+.searching-message {
+  position: relative;
+  margin-top: 10px;
+  z-index: 100;
 }
 
 .error-message {

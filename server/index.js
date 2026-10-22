@@ -144,7 +144,7 @@ async function handleApi(req, res, url) {
     try {
       return sendJson(res, 200, await searchBooks(query.slice(0, 200), GOOGLE_BOOKS_API_KEY));
     } catch (error) {
-      console.error("Search failed:", error.message);
+      console.error(`Search for "${query}" failed: ${error.message}`);
       throw new HttpError(502, "Search is not working right now, try again later.");
     }
   }
