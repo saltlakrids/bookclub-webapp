@@ -43,7 +43,7 @@
         <div v-else-if="isLoading" class="loading-message">Loading...</div>
 
         <div v-else-if="error" class="error-message">
-          No books to pick from.
+          {{ error }}
         </div>
 
         <div v-else class="no-books-message" v-show="showNoBooksMessage">
@@ -64,7 +64,7 @@
           }}</span>
         </p>
         <ul>
-          <li v-for="title in filteredBookTitles" :key="title">{{ title }}</li>
+          <li v-for="(title, index) in filteredBookTitles" :key="index">{{ title }}</li>
         </ul>
       </div>
     </div>
@@ -84,37 +84,12 @@ import {
 } from "firebase/firestore";
 import { db } from "../firebase/init";
 
-const books = ref([]);
-const totalBooks = ref(0);
-const isTotalBooksClicked = ref(true);
-let booksv2 = [];
-const fireworks = ref(null);
-const showTotalBooks = ref(false);
-
 export default {
   setup() {
     const fireworksContainer = ref(null);
+    const fireworks = ref(null);
 
-
-
-    onMounted(async () => {
-      const querySnapshot = await getDocs(collection(db, "books"));
-      let fbBooks = [];
-      querySnapshot.forEach((doc) => {
-        console.log(doc.id, " => ", doc.data());
-        const book = {
-          id: doc.id,
-          title: doc.data().title,
-          pages: doc.data().pages,
-          suggester: doc.data().suggester,
-          image: doc.data().image,
-        };
-        fbBooks.push(book);
-        booksv2.push(doc.id);
-      });
-      books.value = fbBooks;
-      totalBooks.value = fbBooks.length;
-
+    onMounted(() => {
       fireworks.value = new Fireworks(fireworksContainer.value, {
         autoresize: true,
         opacity: 0.5,
@@ -173,40 +148,51 @@ export default {
     });
 
     onUnmounted(() => {
-      fireworks.value.stop();
+      if (fireworks.value) {
+        fireworks.value.stop();
+      }
     });
-    return { fireworksContainer, totalBooks,  };
+    return { fireworksContainer, fireworks };
   },
 
-  //     computed: {
-  //   bookTitles() {
-  //     const selectedBookTitle = this.book ? this.book.title : null;
-  //     return books.value
-  //       .filter((book) => book.title !== selectedBookTitle)
-  //       .map((book) => book.title);
-  //   },
-  // },
-
   computed: {
+    totalBooks() {
+      return this.books.length;
+    },
     filteredBookTitles() {
-      const selectedBookTitle = this.book ? this.book.title : null;
-      return books.value
-        .filter((book) => book.title !== selectedBookTitle)
-        .map((book) => book.title);
+      return this.books.map((book) => book.title);
     },
   },
 
-
   data() {
     return {
+      books: [],
       book: "",
       isLoading: false,
+      isPicking: false,
       error: null,
       showNoBooksMessage: false,
-      isTotalBooksClicked,
+      showCatGif: false,
+      isTotalBooksClicked: true,
       countdown: 0,
-      showTotalBooks,
+      showTotalBooks: false,
     };
+  },
+
+  async created() {
+    try {
+      const querySnapshot = await getDocs(collection(db, "books"));
+      this.books = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        title: doc.data().title,
+        pages: doc.data().pages,
+        suggester: doc.data().suggester,
+        image: doc.data().image,
+      }));
+    } catch (error) {
+      console.error("Error fetching books:", error);
+      this.error = error.message;
+    }
   },
 
   methods: {
@@ -215,12 +201,18 @@ export default {
     },
 
     async startBookPick() {
-      if (booksv2.length === 0) {
+      if (this.isPicking) {
+        return;
+      }
+      if (this.books.length === 0) {
         console.error("No books to pick from.");
         this.showNoBooksMessage = true;
         return;
       }
 
+      this.isPicking = true;
+      this.book = "";
+      this.fireworks.stop();
       this.countdown = 5;
 
       setTimeout(() => {
@@ -243,71 +235,60 @@ export default {
       }
       await this.delay(2000);
       this.showCatGif = false;
-      this.pickRandomBook();
-      fireworks.value.start();
+      await this.pickRandomBook();
+      if (this.book) {
+        this.fireworks.start();
+      }
+      this.isPicking = false;
     },
 
     async pickRandomBook() {
-  
-      if (!db) {
-        console.error("Firestore not initialized");
-        return;
-      }
-
       this.isLoading = true;
       try {
-        const size = booksv2.length;
-        if (size === 0) {
+        if (this.books.length === 0) {
           console.error("No books to pick from.");
           this.showNoBooksMessage = true;
           return;
         }
-        const randomIndex = Math.floor(Math.random() * size);
-        const selectedBookId = booksv2[randomIndex];
-        const selectedBookRef = doc(collection(db, "books"), selectedBookId);
+        const randomIndex = Math.floor(Math.random() * this.books.length);
+        const selectedBookRef = doc(collection(db, "books"), this.books[randomIndex].id);
 
         const bookSnapshot = await getDoc(selectedBookRef);
+        if (!bookSnapshot.exists()) {
+          // Someone else picked or removed it in the meantime
+          this.books.splice(randomIndex, 1);
+          this.error = "That book was already picked, try again.";
+          return;
+        }
         const selectedBook = {
           id: bookSnapshot.id,
           title: bookSnapshot.data().title,
           pages: bookSnapshot.data().pages,
           suggester: bookSnapshot.data().suggester,
           image: bookSnapshot.data().image,
-          ref: selectedBookRef,
         };
-        console.log("Selected book reference:", selectedBook.ref);
-
-        this.book = selectedBook;
 
         await this.addBookToRatings(selectedBook);
-
         await deleteDoc(selectedBookRef);
 
-        booksv2.splice(randomIndex, 1);
-
-        console.log("Book deleted");
-        this.totalBooks = booksv2.length;
+        this.books.splice(randomIndex, 1);
+        this.book = selectedBook;
+        this.error = null;
       } catch (error) {
+        console.error("Error picking book:", error);
         this.error = error.message;
       } finally {
         this.isLoading = false;
       }
-      this.totalBooks = booksv2.length;
-      console.log("Total Books:", this.totalBooks);
     },
-    async addBookToRatings(selectedBook) {
-      try {
-        await setDoc(doc(collection(db, "ratings"), selectedBook.id), {
-          title: selectedBook.title,
-          pages: selectedBook.pages,
-          suggester: selectedBook.suggester,
-          image: selectedBook.image,
-        });
 
-        console.log("Book added to ratings successfully!");
-      } catch (error) {
-        console.error("Error adding book to ratings: ", error);
-      }
+    async addBookToRatings(selectedBook) {
+      await setDoc(doc(collection(db, "ratings"), selectedBook.id), {
+        title: selectedBook.title,
+        pages: selectedBook.pages || null,
+        suggester: selectedBook.suggester,
+        image: selectedBook.image || "",
+      });
     },
 
     toggleTotalBooks() {

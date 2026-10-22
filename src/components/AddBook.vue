@@ -29,10 +29,7 @@
 
 <script>
 import { db } from "../firebase/init";
-import "firebase/database";
 import { doc, setDoc } from "firebase/firestore";
-import { ref } from "vue";
-const title = ref("");
 
 export default {
   name: "add-book",
@@ -54,13 +51,18 @@ export default {
 
       var id = "id" + Math.random().toString(20).slice(2);
 
-      console.log(title);
-
-      await setDoc(doc(db, "books", id), {
-        title: this.title,
-        pages: this.pages,
-        suggester: this.suggester,
-      });
+      try {
+        await setDoc(doc(db, "books", id), {
+          title: this.title,
+          pages: Number(this.pages),
+          suggester: this.suggester,
+          image: "",
+        });
+      } catch (error) {
+        console.error("Error adding book:", error);
+        this.error = "Could not add the book, try again.";
+        return;
+      }
       this.title = "";
       this.pages = "";
       this.suggester = "";

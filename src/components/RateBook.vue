@@ -66,8 +66,8 @@
     <div v-if="isModalOpen" class="modal">
       <div class="modal-content">
         <h2>Rate Book</h2>
-        <form @submit.prevent="closeModalAndAddToHat">
-          <button class="close-button" @click="closeModal">&times;</button>
+        <form @submit.prevent="rateBook(selectedBook)">
+          <button type="button" class="close-button" @click="closeModal">&times;</button>
           <div class="rating-inputs">
             <label for="chrisRating">Chris:</label>
             <input
@@ -113,33 +113,11 @@
               min="1"
               :max="10"
               step="0.5"
-              @input="validateRatingInput('dumstreiRating')"  
+              @input="validateRatingInput('dumstreiRating')"
               required
             />
-
-            <label for="jensRating">Jens:</label>
-            <input
-              type="number"
-              id="jensRating"
-              v-model="jensRating"
-          
-              :max="10"
-              step="0.5"
-              @input="validateRatingInput('jensRating')"  
-            />
-
-            <label for="evaRating">Eva:</label>
-            <input
-              type="number"
-              id="evaRating"
-              v-model="evaRating"
-         
-              :max="10"
-              step="0.5"
-              @input="validateRatingInput('evaRating')"  
-            />
           </div>
-          <button @click="rateBook(selectedBook)">Save rating</button>
+          <button type="submit" :disabled="isSaving">Save rating</button>
         </form>
       </div>
     </div>
@@ -156,18 +134,27 @@ import {
   deleteDoc,
 } from "firebase/firestore";
 
+const RATING_KEYS = [
+  "chrisRating",
+  "frederikRating",
+  "oscarRating",
+  "jensRating",
+  "dumstreiRating",
+  "evaRating",
+];
+
 export default {
   data() {
     return {
       waitingToBeRated: [],
       readAndRated: [],
       isModalOpen: false,
-      chrisRating: 1,
-      frederikRating: 1,
-      oscarRating: 1,
-      jensRating: 0,
-      dumstreiRating: 1,
-      evaRating: 0,
+      isSaving: false,
+      selectedBook: null,
+      chrisRating: "",
+      frederikRating: "",
+      oscarRating: "",
+      dumstreiRating: "",
       sortOption: "default",
     };
   },
@@ -194,14 +181,6 @@ export default {
             pages: data.pages,
             suggester: data.suggester,
             image: data.image,
-            chrisRating: data.chrisRating,
-            frederikRating: data.frederikRating,
-            oscarRating: data.oscarRating,
-            jensRating: data.jensRating,
-            dumstreiRating: data.dumstreiRating,
-            evaRating: data.evaRating,
-            timestamp: data.timestamp,
-            showScores: false,
           };
         });
 
@@ -220,9 +199,11 @@ export default {
             jensRating: data.jensRating,
             dumstreiRating: data.dumstreiRating,
             evaRating: data.evaRating,
+            timestamp: data.timestamp || 0,
             showScores: false,
           };
         });
+        this.sortReadAndRatedBooks();
       } catch (error) {
         console.error("Error fetching books:", error);
       }
@@ -234,106 +215,87 @@ export default {
 
     openModal(book) {
       this.selectedBook = book;
+      this.chrisRating = "";
+      this.frederikRating = "";
+      this.oscarRating = "";
+      this.dumstreiRating = "";
       this.isModalOpen = true;
     },
 
-    closeModalAndAddToHat() {
+    closeModal() {
       this.isModalOpen = false;
     },
 
     async rateBook(book) {
-      if (book) {
-        const id = "id" + Math.random().toString(20).slice(2);
-        const thumbnail = book.image ? book.image : "";
-
-        try {
-        await setDoc(doc(db, "rated", id), {
-          title: book.title,
-          pages: book.pages || null,
-          suggester: book.suggester,
-          image: thumbnail,
-          chrisRating: this.chrisRating,
-          frederikRating: this.frederikRating,
-          oscarRating: this.oscarRating,
-          jensRating: this.jensRating,
-          dumstreiRating: this.dumstreiRating,
-          evaRating: this.evaRating,
-          timestamp: Date.now(),
-        })
-        const ratingsDocRef = doc(db, "ratings", book.id);
-      await deleteDoc(ratingsDocRef);
-
-      const index = this.waitingToBeRated.findIndex((b) => b.id === book.id);
-      if (index !== -1) {
-        this.waitingToBeRated.splice(index, 1);
+      if (!book || this.isSaving) {
+        return;
       }
 
-      this.readAndRated.unshift({
-        id: id,
+      const id = "id" + Math.random().toString(20).slice(2);
+      const ratedBook = {
         title: book.title,
         pages: book.pages || null,
         suggester: book.suggester,
-        image: thumbnail,
-      });
+        image: book.image || "",
+        chrisRating: this.chrisRating,
+        frederikRating: this.frederikRating,
+        oscarRating: this.oscarRating,
+        dumstreiRating: this.dumstreiRating,
+        timestamp: Date.now(),
+      };
 
-      this.chrisRating = "";
-      this.frederikRating = "";
-      this.oscarRating = "";
-      this.jensRating = "";
-      this.dumstreiRating = "";
-      this.evaRating = "";
+      this.isSaving = true;
+      try {
+        await setDoc(doc(db, "rated", id), ratedBook);
+        await deleteDoc(doc(db, "ratings", book.id));
 
-      this.closeModalAndAddToHat();
-      await this.rateBooks();
-    } catch (error) {
-      console.error("Error rating the book:", error);
-    }
-  
-  } else {
-    console.error("Suggester name is required.");
-  }
-},
+        this.waitingToBeRated = this.waitingToBeRated.filter(
+          (b) => b.id !== book.id
+        );
+        this.readAndRated.unshift({ id, ...ratedBook, showScores: false });
+        this.sortReadAndRatedBooks();
 
-    calculateAverageRating(book) {
-      const ratings = [
-        
-        book.chrisRating,
-        book.frederikRating,
-        book.oscarRating,
-        book.jensRating,
-        book.dumstreiRating,
-        book.evaRating,
-      ];
+        this.closeModal();
+      } catch (error) {
+        console.error("Error rating the book:", error);
+      } finally {
+        this.isSaving = false;
+      }
+    },
 
-      const validRatings = ratings.filter(
-        (rating) => typeof rating === "number" && !isNaN(rating)
+    // Only counts people who actually rated (0, "" and missing mean no rating)
+    averageRating(book) {
+      const ratings = RATING_KEYS.map((key) => book[key]).filter(
+        (rating) => typeof rating === "number" && rating > 0
       );
 
-      if (validRatings.length === 0) {
-        return "No ratings available";
+      if (ratings.length === 0) {
+        return null;
       }
 
-      const sum = ratings.reduce((acc, rating) => acc + rating, 0);
-      const average = sum / ratings.length;
-
-      return average.toFixed(1);
+      return ratings.reduce((acc, rating) => acc + rating, 0) / ratings.length;
     },
+
+    calculateAverageRating(book) {
+      const average = this.averageRating(book);
+      return average === null ? "No ratings available" : average.toFixed(1);
+    },
+
     sortReadAndRatedBooks() {
       switch (this.sortOption) {
         case "default":
+          this.readAndRated.sort((a, b) => b.timestamp - a.timestamp);
           break;
 
         case "highestScore":
           this.readAndRated.sort((a, b) => {
-            const averageA = this.calculateAverageRating(a);
-            const averageB = this.calculateAverageRating(b);
-            return averageB - averageA;
+            return (this.averageRating(b) ?? -1) - (this.averageRating(a) ?? -1);
           });
           break;
 
         case "alphabetical":
           this.readAndRated.sort((a, b) => {
-            return a.title.localeCompare(b.title);
+            return (a.title || "").localeCompare(b.title || "");
           });
           break;
 
@@ -342,32 +304,20 @@ export default {
           break;
 
         case "frederik":
-          this.sortByRating("frederikRating");
+          this.sortByNumeric("frederikRating");
           break;
 
         case "chrisRating":
-          this.sortByRating("chrisRating");
-          break;
-
         case "oscarRating":
-          this.sortByRating("oscarRating");
-          break;
-
         case "jensRating":
-          this.sortByRating("jensRating");
-          break;
-
         case "dumstreiRating":
-          this.sortByRating("dumstreiRating");
-          break;
-
         case "evaRating":
-          this.sortByRating("evaRating");
+          this.sortByNumeric(this.sortOption);
           break;
 
         case "suggester":
           this.readAndRated.sort((a, b) =>
-            a.suggester.localeCompare(b.suggester)
+            (a.suggester || "").localeCompare(b.suggester || "")
           );
           break;
 
@@ -376,14 +326,9 @@ export default {
       }
     },
 
-    sortByRating(ratingKey) {
-      this.readAndRated.sort((a, b) => {
-        return b[ratingKey] - a[ratingKey];
-      });
-    },
-
+    // Books missing the value go to the bottom
     sortByNumeric(property) {
-      this.readAndRated.sort((a, b) => b[property] - a[property]);
+      this.readAndRated.sort((a, b) => (Number(b[property]) || 0) - (Number(a[property]) || 0));
     },
   },
   created() {

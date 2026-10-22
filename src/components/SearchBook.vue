@@ -21,15 +21,15 @@
   <div v-if="isModalOpen" class="modal">
       <div class="modal-content">
         <h2>Suggester name</h2>
-        <form @submit.prevent="closeModalAndAddToHat">
-          <button class="close-button" @click="closeModal">&times;</button>
+        <form @submit.prevent="addToHat(selectedBook)">
+          <button type="button" class="close-button" @click="closeModal">&times;</button>
           <select class="name-list" v-model="suggesterName" required>
             <option disabled value="">Select a name</option>
             <option v-for="name in suggesterNames" :key="name" :value="name">
               {{ name }}
             </option>
           </select>
-          <button @click="addToHat(selectedBook)">Save</button>
+          <button type="submit">Save</button>
         </form>
       </div>
     </div>
@@ -48,14 +48,12 @@ export default {
       addedToHat: false,
       searchTimeout: null,
       isModalOpen: false,
-      suggesterNames: ['Chris', 'Eva', 'Frederik', 'Jens', 'Michael', 'Oscar'],
+      selectedBook: null,
+      suggesterName: '',
+      suggesterNames: ['Chris', 'Dumstrei', 'Frederik', 'Oscar'],
     };
   },
   methods: {
-
-    capitalizeFirstLetter() {
-      this.title = this.title.charAt(0).toUpperCase() + this.title.slice(1);
-    },
 
     searchBooks() {
 
@@ -67,11 +65,13 @@ export default {
       
       this.searchTimeout = setTimeout(() => {
       const apiKey = process.env.VUE_APP_GOOGLE_BOOKS_API_KEY;
-      const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${this.searchQuery}&key=${apiKey}`;
+      // The key is optional, Google Books also answers without one (lower quota)
+      const apiUrl = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(this.searchQuery)}` + (apiKey ? `&key=${apiKey}` : '');
       
       this.books = []; 
+      this.addedToHat = false;
       
-      if (this.searchQuery.length > 2) {
+      if (this.searchQuery.trim().length > 2) {
         this.$axios.get(apiUrl)
           .then(response => {
             this.books = response.data.items || [];
@@ -111,10 +111,6 @@ export default {
     },
 
 
-  closeModalAndAddToHat() {
-    this.isModalOpen = false;
-  },
-
     addToHat(book) {
       
       if (book){
@@ -141,7 +137,7 @@ export default {
         this.searchQuery = '';
         this.books = [];
         this.suggesterName = '';
-        this.closeModalAndAddToHat();
+        this.closeModal();
       })
       .catch(error => {
         console.error('Error adding book to the hat:', error);
