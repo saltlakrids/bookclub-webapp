@@ -1,7 +1,8 @@
-// Book search. Uses Google Books when a key is configured and falls back to
-// Open Library (no key needed) when there is no key or Google refuses.
+// Book search. Asks Google Books (when a key is configured) and Open Library at once,
+// preferring Google's faster answer and falling back to Open Library (no key needed).
 
-const GOOGLE_TIMEOUT_MS = 8000;
+// Short: Open Library is already on its way as the backup
+const GOOGLE_TIMEOUT_MS = 4000;
 // Open Library is usually quick but has slow spells of 10+ seconds
 const OPEN_LIBRARY_TIMEOUT_MS = 25000;
 const CACHE_MS = 10 * 60 * 1000;
@@ -48,15 +49,21 @@ export async function searchOpenLibrary(query, limit = 20) {
   }));
 }
 
+// Both sources are asked at once. Google usually answers in well under a second, so its results
+// are used as soon as they arrive; Open Library (often seconds, sometimes 10+) is only waited for
+// when Google fails, is over its daily quota or finds nothing.
 async function search(query, apiKey) {
-  if (apiKey) {
-    try {
-      return await searchGoogle(query, apiKey);
-    } catch (error) {
-      console.warn(`Google Books search failed, using Open Library: ${error.message}`);
-    }
+  const openLibrary = searchOpenLibrary(query);
+  if (!apiKey) return openLibrary;
+  openLibrary.catch(() => {}); // not awaited when Google wins
+
+  try {
+    const google = await searchGoogle(query, apiKey);
+    if (google.length > 0) return google;
+  } catch (error) {
+    console.warn(`Google Books search failed, using Open Library: ${error.message}`);
   }
-  return searchOpenLibrary(query);
+  return openLibrary;
 }
 
 // Remembers recent searches, and people searching the same thing at once share one request

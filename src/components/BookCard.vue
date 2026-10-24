@@ -5,6 +5,9 @@
       <button v-if="canAddCover && !book.image" type="button" class="add-cover" @click="$emit('add-cover', book)">
         + Add cover
       </button>
+      <button v-if="editable" type="button" class="edit-book" aria-label="Edit book" title="Edit or delete" @click="$emit('edit', book)">
+        ✎
+      </button>
     </div>
     <div class="book-card-title" :title="book.title">{{ book.title }}</div>
     <div class="book-card-meta">
@@ -25,8 +28,10 @@ export default {
     book: { type: Object, required: true },
     // Books already in the club's list can get a cover afterwards
     canAddCover: { type: Boolean, default: false },
+    // Shows the ✎ button that opens the edit/delete dialog
+    editable: { type: Boolean, default: false },
   },
-  emits: ["add-cover"],
+  emits: ["add-cover", "edit"],
   methods: {
     // The cover element, for the fly-into-the-hat animation
     coverElement() {
@@ -69,12 +74,33 @@ export default {
   text-align: center;
 }
 
+/* Full width so the cover is centred in the card whatever its own size */
 .book-card-cover {
   position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
 }
 
 .book-card .book-cover-normal {
   width: min(140px, 100%);
+}
+
+.edit-book {
+  position: absolute;
+  top: 6px;
+  right: calc(50% - min(70px, 50%) + 6px);
+  width: 30px;
+  height: 30px;
+  margin: 0;
+  padding: 0;
+  font-size: 15px;
+  line-height: 1;
+  color: #ffffff;
+  background: rgba(20, 16, 30, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  cursor: pointer;
 }
 
 .add-cover {

@@ -4,7 +4,7 @@
     <div>
       <h3 class="heading">Waiting to be rated</h3>
       <div v-if="waitingToBeRated.length > 0" class="book-grid waiting">
-        <BookCard v-for="book in waitingToBeRated" :key="book.id" :book="book" can-add-cover @add-cover="openCoverPicker">
+        <BookCard v-for="book in waitingToBeRated" :key="book.id" :book="book" can-add-cover editable @add-cover="openCoverPicker" @edit="editBook = $event">
           <template #meta>
             <div v-if="book.pages">{{ book.pages }} pages</div>
             <div v-if="book.suggester">Suggested by {{ book.suggester }}</div>
@@ -45,7 +45,7 @@
         </select>
       </div>
       <div class="book-grid read">
-        <BookCard v-for="book in readAndRated" :key="book.id" :book="book" can-add-cover @add-cover="openCoverPicker">
+        <BookCard v-for="book in readAndRated" :key="book.id" :book="book" can-add-cover editable @add-cover="openCoverPicker" @edit="editBook = $event">
           <template #meta>
             <div class="average-rating">★ {{ calculateAverageRating(book) }}</div>
             <div v-if="myScore(book) !== undefined" class="my-score">
@@ -108,6 +108,14 @@
     </BookDialog>
 
     <CoverPicker :open="coverBook !== null" :book="coverBook" @close="coverBook = null" @chosen="coverChosen" />
+    <BookEditor
+      :open="editBook !== null"
+      :book="editBook"
+      :members="allMembers"
+      @close="editBook = null"
+      @saved="afterEdit"
+      @deleted="afterEdit"
+    />
   </div>
 </template>
 
@@ -115,11 +123,12 @@
 import api, { session, errorMessage } from "@/api";
 import BookCard from "@/components/BookCard.vue";
 import BookDialog from "@/components/BookDialog.vue";
+import BookEditor from "@/components/BookEditor.vue";
 import CoverPicker from "@/components/CoverPicker.vue";
 import { agreementLabel, clubSummary, formatDuration, readingDays, scoreOf, spread } from "@/stats";
 
 export default {
-  components: { BookCard, BookDialog, CoverPicker },
+  components: { BookCard, BookDialog, BookEditor, CoverPicker },
   data() {
     return {
       session,
@@ -133,9 +142,16 @@ export default {
       error: "",
       sortOption: "default",
       coverBook: null,
+      editBook: null,
+      members: [],
     };
   },
   computed: {
+    // Former members only appear as raters, but can still be a suggester of old books
+    allMembers() {
+      return [...new Set([...this.members, ...this.raters])];
+    },
+
     summary() {
       return clubSummary(this.readAndRated);
     },
@@ -163,6 +179,7 @@ export default {
         this.waitingToBeRated = data.reading;
         this.readAndRated = data.rated.map((book) => ({ ...book, showScores: false }));
         this.raters = data.raters;
+        this.members = data.members;
         this.sortReadAndRatedBooks();
       } catch (error) {
         console.error("Error fetching books:", error);
@@ -186,6 +203,11 @@ export default {
 
     openCoverPicker(book) {
       this.coverBook = book;
+    },
+
+    async afterEdit() {
+      this.editBook = null;
+      await this.rateBooks();
     },
 
     coverChosen(url) {

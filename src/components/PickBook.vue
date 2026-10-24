@@ -64,12 +64,28 @@
           }}</span>
         </p>
         <div class="hat-books">
-          <div v-for="hatBook in books" :key="hatBook.id" class="hat-book">
+          <button
+            v-for="hatBook in books"
+            :key="hatBook.id"
+            type="button"
+            class="hat-book"
+            title="Edit or take out of the hat"
+            @click="editBook = hatBook"
+          >
             <BookCover :book="hatBook" size="small" />
             <span>{{ hatBook.title }}</span>
-          </div>
+          </button>
         </div>
+        <p class="hat-hint">Tap a book to edit it or take it out of the hat.</p>
       </div>
+      <BookEditor
+        :open="editBook !== null"
+        :book="editBook"
+        :members="members"
+        @close="editBook = null"
+        @saved="bookSaved"
+        @deleted="bookDeleted"
+      />
     </div>
   </div>
 </template>
@@ -79,10 +95,11 @@ import { ref, onMounted, onUnmounted, } from "vue";
 import { Fireworks } from "fireworks-js";
 import api, { errorMessage } from "@/api";
 import BookCover from "@/components/BookCover.vue";
+import BookEditor from "@/components/BookEditor.vue";
 import { riseFromHat } from "@/hatAnimation";
 
 export default {
-  components: { BookCover },
+  components: { BookCover, BookEditor },
   setup() {
     const fireworksContainer = ref(null);
     const fireworks = ref(null);
@@ -171,6 +188,8 @@ export default {
       isTotalBooksClicked: true,
       countdown: 0,
       showTotalBooks: false,
+      editBook: null,
+      members: [],
     };
   },
 
@@ -178,6 +197,7 @@ export default {
     try {
       const { data } = await api.get("/books");
       this.books = data.hat;
+      this.members = [...new Set([...data.members, ...data.raters])];
     } catch (error) {
       console.error("Error fetching books:", error);
       this.error = errorMessage(error);
@@ -260,6 +280,16 @@ export default {
     toggleTotalBooks() {
       this.isTotalBooksClicked = !this.isTotalBooksClicked;
       this.showTotalBooks = !this.showTotalBooks;
+    },
+
+    bookSaved(updated) {
+      this.books = this.books.map((b) => (b.id === updated.id ? updated : b));
+      this.editBook = null;
+    },
+
+    bookDeleted(id) {
+      this.books = this.books.filter((b) => b.id !== id);
+      this.editBook = null;
     },
   },
 };
@@ -361,8 +391,28 @@ button:hover {
   flex-direction: column;
   align-items: center;
   gap: 6px;
+  width: auto;
+  height: auto;
+  margin: 0;
+  padding: 6px 4px;
+  font-family: "Quicksand", sans-serif;
   font-size: 12px;
   line-height: 1.25;
+  color: #ffffff;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.hat-book:hover {
+  border-color: rgba(255, 201, 14, 0.5);
+}
+
+.hat-hint {
+  margin-top: -20px;
+  font-size: 12px;
+  opacity: 0.7;
 }
 
 .hat-book span {

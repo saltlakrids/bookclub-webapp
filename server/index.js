@@ -14,7 +14,7 @@ import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ACCESS_JWT_HEADER, createAccessVerifier } from "./access.js";
 import { openDb } from "./db.js";
-import { HttpError, addBook, listBooks, pickBook, rateBook, setBookImage } from "./books.js";
+import { HttpError, addBook, deleteBook, listBooks, pickBook, rateBook, setBookImage, updateBook } from "./books.js";
 import { searchBooks } from "./search.js";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
@@ -150,6 +150,16 @@ async function handleApi(req, res, url) {
   if (ratingMatch && req.method === "PUT") {
     const { score = null } = await readJson(req);
     return sendJson(res, 200, rateBook(db, Number(ratingMatch[1]), me, score));
+  }
+
+  const bookMatch = url.pathname.match(/^\/api\/books\/(\d+)$/);
+  if (bookMatch && req.method === "PUT") {
+    return sendJson(res, 200, updateBook(db, Number(bookMatch[1]), await readJson(req)));
+  }
+  if (bookMatch && req.method === "DELETE") {
+    const book = Number(bookMatch[1]);
+    console.log(`${me.name} deleted book ${book}`);
+    return sendJson(res, 200, deleteBook(db, book));
   }
 
   const imageMatch = url.pathname.match(/^\/api\/books\/(\d+)\/image$/);

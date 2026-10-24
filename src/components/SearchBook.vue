@@ -126,7 +126,7 @@ export default {
             this.error = errorMessage(error);
           });
       }
-    }, 700);
+    }, 400);
   },
   openModal(book) {
     this.selectedBook = book;

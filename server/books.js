@@ -22,6 +22,7 @@ function baseBook(row) {
     pages: row.pages,
     image: row.image || "",
     suggester: row.suggester || "",
+    status: row.status,
     addedAt: row.added_at,
     startedAt: row.started_at,
     finishedAt: row.finished_at,
@@ -101,6 +102,76 @@ export function addBook(db, { title, pages, image, suggester }) {
     .prepare("INSERT INTO books (title, pages, image, suggester_id, status, added_at) VALUES (?, ?, ?, ?, 'hat', ?)")
     .run(title, pages, image, member.id, now());
   return baseBook(db.prepare(`${BOOK_SELECT} WHERE b.id = ?`).get(lastInsertRowid));
+}
+
+const DATE = /^\d{4}-\d{2}-\d{2}$/;
+
+// "2025-03-14" (from a date field) or empty. Stored at noon UTC so the day is the same in every time zone.
+function dateField(value, label) {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value !== "string" || !DATE.test(value) || Number.isNaN(Date.parse(value))) {
+    throw new HttpError(400, `${label} must be a date.`);
+  }
+  return `${value}T12:00:00.000Z`;
+}
+
+// Fix a book's details, e.g. the old spreadsheet books that have no suggester, pages or reading dates.
+// Only the fields sent are changed. The dates only apply to books that left the hat.
+export function updateBook(db, bookId, body) {
+  const book = db.prepare(`${BOOK_SELECT} WHERE b.id = ?`).get(bookId);
+  if (!book) {
+    throw new HttpError(404, "Book not found.");
+  }
+
+  const changes = {};
+  if ("title" in body) {
+    const title = typeof body.title === "string" ? body.title.trim() : "";
+    if (!title || title.length > 300) throw new HttpError(400, "A title is required.");
+    changes.title = title;
+  }
+  if ("pages" in body) {
+    const pages = body.pages === null || body.pages === "" ? null : Number(body.pages);
+    if (pages !== null && !(Number.isInteger(pages) && pages > 0 && pages < 100000)) {
+      throw new HttpError(400, "Pages must be a whole number.");
+    }
+    changes.pages = pages;
+  }
+  if ("suggester" in body) {
+    if (body.suggester === null || body.suggester === "") {
+      changes.suggester_id = null;
+    } else {
+      // Former members (Eva, Jens) can still be the suggester of old books
+      const member = db.prepare("SELECT id FROM members WHERE name = ?").get(body.suggester);
+      if (!member) throw new HttpError(400, "Unknown member.");
+      changes.suggester_id = member.id;
+    }
+  }
+  if ("startedAt" in body && book.status !== "hat") changes.started_at = dateField(body.startedAt, "Started");
+  if ("finishedAt" in body && book.status === "rated") changes.finished_at = dateField(body.finishedAt, "Finished");
+
+  const started = "started_at" in changes ? changes.started_at : book.started_at;
+  const finished = "finished_at" in changes ? changes.finished_at : book.finished_at;
+  if (started && finished && finished < started) {
+    throw new HttpError(400, "The book can't be finished before it was started.");
+  }
+
+  const columns = Object.keys(changes);
+  if (columns.length) {
+    db.prepare(`UPDATE books SET ${columns.map((c) => `${c} = ?`).join(", ")} WHERE id = ?`).run(
+      ...columns.map((c) => changes[c]),
+      bookId,
+    );
+  }
+  return baseBook(db.prepare(`${BOOK_SELECT} WHERE b.id = ?`).get(bookId));
+}
+
+// Removes a book and its ratings for good
+export function deleteBook(db, bookId) {
+  const { changes } = db.prepare("DELETE FROM books WHERE id = ?").run(bookId);
+  if (changes === 0) {
+    throw new HttpError(404, "Book not found.");
+  }
+  return { deleted: true };
 }
 
 // Anyone in the club can give a book a cover, e.g. one the search didn't find
