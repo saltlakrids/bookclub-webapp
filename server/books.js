@@ -90,7 +90,7 @@ export function addBook(db, { title, pages, image, suggester }) {
     throw new HttpError(400, "A title is required.");
   }
   pages = Number.isInteger(pages) && pages > 0 ? pages : null;
-  image = typeof image === "string" && /^https?:\/\//.test(image) ? image : null;
+  image = typeof image === "string" && /^https?:\/\//.test(image) ? image.replace(/^http:\/\//, "https://") : null;
 
   const member = db.prepare("SELECT id FROM members WHERE name = ? AND active = 1").get(suggester);
   if (!member) {
@@ -101,6 +101,21 @@ export function addBook(db, { title, pages, image, suggester }) {
     .prepare("INSERT INTO books (title, pages, image, suggester_id, status, added_at) VALUES (?, ?, ?, ?, 'hat', ?)")
     .run(title, pages, image, member.id, now());
   return baseBook(db.prepare(`${BOOK_SELECT} WHERE b.id = ?`).get(lastInsertRowid));
+}
+
+// Anyone in the club can give a book a cover, e.g. one the search didn't find
+export function setBookImage(db, bookId, image) {
+  image = typeof image === "string" ? image.trim() : "";
+  if (!/^https?:\/\/\S+$/.test(image) || image.length > 2000) {
+    throw new HttpError(400, "That doesn't look like a link to an image.");
+  }
+  // The site is served over HTTPS, and browsers block plain-HTTP images on it
+  image = image.replace(/^http:\/\//, "https://");
+  const { changes } = db.prepare("UPDATE books SET image = ? WHERE id = ?").run(image, bookId);
+  if (changes === 0) {
+    throw new HttpError(404, "Book not found.");
+  }
+  return baseBook(db.prepare(`${BOOK_SELECT} WHERE b.id = ?`).get(bookId));
 }
 
 export function pickBook(db) {

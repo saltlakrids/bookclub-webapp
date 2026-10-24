@@ -14,7 +14,7 @@ import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 import { ACCESS_JWT_HEADER, createAccessVerifier } from "./access.js";
 import { openDb } from "./db.js";
-import { HttpError, addBook, listBooks, pickBook, rateBook } from "./books.js";
+import { HttpError, addBook, listBooks, pickBook, rateBook, setBookImage } from "./books.js";
 import { searchBooks } from "./search.js";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
@@ -150,6 +150,12 @@ async function handleApi(req, res, url) {
   if (ratingMatch && req.method === "PUT") {
     const { score = null } = await readJson(req);
     return sendJson(res, 200, rateBook(db, Number(ratingMatch[1]), me, score));
+  }
+
+  const imageMatch = url.pathname.match(/^\/api\/books\/(\d+)\/image$/);
+  if (imageMatch && req.method === "PUT") {
+    const { image } = await readJson(req);
+    return sendJson(res, 200, setBookImage(db, Number(imageMatch[1]), image));
   }
 
   if (route === "GET /api/search") {

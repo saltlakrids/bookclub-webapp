@@ -30,7 +30,14 @@ const routes = [
   {
     path: '/rate',
     name: 'rate', 
-    component: RateBook 
+    component: RateBook
+  },
+  {
+    path: '/me',
+    name: 'me',
+    component: function () {
+      return import('../views/MyBooksView.vue')
+    }
   }
 ]
 

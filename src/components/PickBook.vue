@@ -25,11 +25,10 @@
           <div v-if="book" class="selected-book">
             <h3>Selected Book</h3>
             <br />
-            <img v-if="book.image" :src="book.image" alt="Book Cover" />
-            <div v-else class="no-cover">No Cover Available</div>
-            <p><strong>Title:</strong> {{ book.title }}</p>
-            <p><strong>Pages:</strong> {{ book.pages }}</p>
-            <p><strong>Suggested by:</strong> {{ book.suggester }}</p>
+            <BookCover ref="pickedCover" :book="book" class="picked-cover" />
+            <p class="picked-title">{{ book.title }}</p>
+            <p v-if="book.pages">{{ book.pages }} pages</p>
+            <p v-if="book.suggester">Suggested by {{ book.suggester }}</p>
           </div>
         </transition>
 
@@ -51,6 +50,7 @@
         </div>
       </div>
       <img
+        ref="hat"
         class="addHat hatAnimation"
         alt="The Hat"
         src="../assets/theHat.png"
@@ -63,9 +63,12 @@
             totalBooks
           }}</span>
         </p>
-        <ul>
-          <li v-for="(title, index) in filteredBookTitles" :key="index">{{ title }}</li>
-        </ul>
+        <div class="hat-books">
+          <div v-for="hatBook in books" :key="hatBook.id" class="hat-book">
+            <BookCover :book="hatBook" size="small" />
+            <span>{{ hatBook.title }}</span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -75,8 +78,11 @@
 import { ref, onMounted, onUnmounted, } from "vue";
 import { Fireworks } from "fireworks-js";
 import api, { errorMessage } from "@/api";
+import BookCover from "@/components/BookCover.vue";
+import { riseFromHat } from "@/hatAnimation";
 
 export default {
+  components: { BookCover },
   setup() {
     const fireworksContainer = ref(null);
     const fireworks = ref(null);
@@ -151,9 +157,6 @@ export default {
     totalBooks() {
       return this.books.length;
     },
-    filteredBookTitles() {
-      return this.books.map((book) => book.title);
-    },
   },
 
   data() {
@@ -224,6 +227,11 @@ export default {
       await this.pickRandomBook();
       if (this.book) {
         this.fireworks.start();
+        // The winner climbs out of the hat
+        await this.$nextTick();
+        await riseFromHat(this.$refs.pickedCover?.$el, this.$refs.hat).catch((error) =>
+          console.warn("Hat animation failed:", error),
+        );
       }
       this.isPicking = false;
     },
@@ -338,7 +346,40 @@ button:hover {
   display: flex;
   justify-content: center;
   flex-direction: column;
-  width: 250px;
+  width: min(560px, calc(100vw - 32px));
+}
+
+.hat-books {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 14px;
+  padding-bottom: 40px;
+}
+
+.hat-book {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.hat-book span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.picked-cover {
+  margin: 0 auto 10px;
+  width: 170px;
+}
+
+.picked-title {
+  font-size: 20px;
+  font-weight: bold;
 }
 
 .no-cover {
