@@ -4,7 +4,7 @@
     <div class="who-content">
       <template v-if="!session.login">
         <h2>Who goes there?</h2>
-        <p>{{ session.error || "Open the book club through Tailscale to sign in." }}</p>
+        <p>{{ session.error || "Sign in to open the book club." }}</p>
       </template>
       <template v-else-if="session.unclaimed.length">
         <h2>Who are you?</h2>
@@ -24,7 +24,7 @@
         <p>All members are taken. Ask Frederik to let you in.</p>
       </template>
       <div v-if="error" class="error">{{ error }}</div>
-      <p v-if="session.login" class="login">Tailscale: {{ session.login }}</p>
+      <p v-if="session.login" class="login">Signed in as {{ session.login }}</p>
     </div>
   </div>
 </template>

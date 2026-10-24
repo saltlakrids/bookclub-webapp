@@ -21,23 +21,24 @@ function done(changes, what) {
 
 switch (command) {
   case "members":
-    console.table(db.prepare("SELECT name, active, tailscale_login FROM members ORDER BY active DESC, name").all());
+    console.table(db.prepare("SELECT name, active, login FROM members ORDER BY active DESC, name").all());
     break;
 
   case "unclaim":
-    done(db.prepare("UPDATE members SET tailscale_login = NULL WHERE name = ? AND active = 1").run(name).changes,
+    done(db.prepare("UPDATE members SET login = NULL WHERE name = ? AND active = 1").run(name).changes,
       `${name} can be claimed again.`);
     break;
 
   case "claim":
     if (!login) {
-      console.error("Usage: node cli.js claim <member> <tailscale login>");
+      console.error("Usage: node cli.js claim <member> <email>");
       process.exit(1);
     }
-    done(db.prepare("UPDATE members SET tailscale_login = ? WHERE name = ? AND active = 1").run(login, name).changes,
-      `${name} is now ${login}.`);
+    // Cloudflare emails are compared lower-cased
+    done(db.prepare("UPDATE members SET login = ? WHERE name = ? AND active = 1").run(login.toLowerCase(), name).changes,
+      `${name} is now ${login.toLowerCase()}.`);
     break;
 
   default:
-    console.log("Commands: members | unclaim <member> | claim <member> <tailscale login>");
+    console.log("Commands: members | unclaim <member> | claim <member> <email>");
 }

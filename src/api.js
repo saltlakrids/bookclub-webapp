@@ -3,7 +3,7 @@ import { reactive } from 'vue';
 
 const api = axios.create({ baseURL: '/api' });
 
-// Who is signed in (via Tailscale) and which member they are
+// Who is signed in (via Cloudflare Access or Tailscale) and which member they are
 export const session = reactive({
   loaded: false,
   login: null,

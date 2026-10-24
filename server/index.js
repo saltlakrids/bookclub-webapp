@@ -1,13 +1,18 @@
 // Slow Guys Book Club server: JSON API + the built Vue app, backed by SQLite.
 //
-// Login comes from Tailscale. The server only listens on localhost and
-// `tailscale serve` proxies to it, adding the Tailscale-User-Login header for
-// whoever is on the other end. Each Tailscale login claims one member once.
+// The server only listens on localhost; a proxy in front of it says who is
+// asking, and each login claims one member once:
+// - Cloudflare Access (ACCESS_TEAM and ACCESS_AUD set): cloudflared proxies to
+//   the server and Cloudflare adds a signed JWT with the email people logged in
+//   with. Only that verified email counts. Tailscale's header is then ignored,
+//   because Cloudflare passes visitors' own headers through.
+// - Otherwise `tailscale serve` proxies and adds Tailscale-User-Login.
 
 import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
 import { extname, join, normalize, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
+import { ACCESS_JWT_HEADER, createAccessVerifier } from "./access.js";
 import { openDb } from "./db.js";
 import { HttpError, addBook, listBooks, pickBook, rateBook } from "./books.js";
 import { searchBooks } from "./search.js";
@@ -19,6 +24,10 @@ const DB_PATH = process.env.DB_PATH || join(here, "..", "data", "bookclub.db");
 const STATIC_DIR = resolve(process.env.STATIC_DIR || join(here, "..", "dist"));
 const GOOGLE_BOOKS_API_KEY = process.env.GOOGLE_BOOKS_API_KEY || "";
 const DEV_LOGIN = process.env.NODE_ENV === "production" ? "" : process.env.DEV_LOGIN || "";
+const verifyAccess =
+  process.env.ACCESS_TEAM && process.env.ACCESS_AUD
+    ? createAccessVerifier({ team: process.env.ACCESS_TEAM, aud: process.env.ACCESS_AUD })
+    : null;
 
 const db = openDb(DB_PATH);
 
@@ -73,18 +82,23 @@ async function readJson(req) {
   }
 }
 
-function currentLogin(req) {
+async function currentLogin(req) {
+  if (verifyAccess) {
+    const token = req.headers[ACCESS_JWT_HEADER];
+    const email = typeof token === "string" ? await verifyAccess(token) : null;
+    return email || DEV_LOGIN || null;
+  }
   const login = req.headers["tailscale-user-login"];
   return (typeof login === "string" && login) || DEV_LOGIN || null;
 }
 
 function memberFor(login) {
-  return db.prepare("SELECT id, name FROM members WHERE tailscale_login = ? AND active = 1").get(login) || null;
+  return db.prepare("SELECT id, name FROM members WHERE login = ? AND active = 1").get(login) || null;
 }
 
-function requireMember(req) {
-  const login = currentLogin(req);
-  if (!login) throw new HttpError(401, "Open the app through Tailscale to sign in.");
+async function requireMember(req) {
+  const login = await currentLogin(req);
+  if (!login) throw new HttpError(401, "Sign in to open the book club.");
   const member = memberFor(login);
   if (!member) throw new HttpError(403, "Choose who you are first.");
   return member;
@@ -95,8 +109,8 @@ async function handleApi(req, res, url) {
   requireJson(req);
 
   if (route === "GET /api/me") {
-    const login = currentLogin(req);
-    const members = db.prepare("SELECT name, tailscale_login IS NULL AS free FROM members WHERE active = 1 ORDER BY name").all();
+    const login = await currentLogin(req);
+    const members = db.prepare("SELECT name, login IS NULL AS free FROM members WHERE active = 1 ORDER BY name").all();
     return sendJson(res, 200, {
       login,
       member: login ? memberFor(login) : null,
@@ -106,18 +120,18 @@ async function handleApi(req, res, url) {
   }
 
   if (route === "POST /api/me/claim") {
-    const login = currentLogin(req);
-    if (!login) throw new HttpError(401, "Open the app through Tailscale to sign in.");
+    const login = await currentLogin(req);
+    if (!login) throw new HttpError(401, "Sign in to open the book club.");
     if (memberFor(login)) throw new HttpError(409, "You have already chosen who you are.");
     const { member } = await readJson(req);
     const { changes } = db
-      .prepare("UPDATE members SET tailscale_login = ? WHERE name = ? AND active = 1 AND tailscale_login IS NULL")
+      .prepare("UPDATE members SET login = ? WHERE name = ? AND active = 1 AND login IS NULL")
       .run(login, String(member || ""));
     if (changes === 0) throw new HttpError(409, "That member is already taken.");
     return sendJson(res, 200, { member: memberFor(login) });
   }
 
-  const me = requireMember(req);
+  const me = await requireMember(req);
 
   if (route === "GET /api/books") {
     return sendJson(res, 200, listBooks(db, me));
@@ -198,6 +212,7 @@ const server = createServer(async (req, res) => {
 
 server.listen(PORT, HOST, () => {
   console.log(`Book club listening on http://${HOST}:${PORT} (db: ${DB_PATH})`);
+  console.log(verifyAccess ? `Sign in: Cloudflare Access (team ${process.env.ACCESS_TEAM})` : "Sign in: Tailscale");
   if (DEV_LOGIN) console.log(`Dev login: ${DEV_LOGIN}`);
 });
 

@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS members (
   id INTEGER PRIMARY KEY,
   name TEXT NOT NULL UNIQUE,
   active INTEGER NOT NULL DEFAULT 1,
-  tailscale_login TEXT UNIQUE
+  login TEXT UNIQUE -- the email (Cloudflare) or Tailscale login that claimed this member
 );
 
 CREATE TABLE IF NOT EXISTS books (
@@ -45,6 +45,13 @@ export function openDb(path) {
   const db = new DatabaseSync(path);
   db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
   db.exec(SCHEMA);
+
+  // Databases from the Tailscale-only days call the column tailscale_login
+  const columns = db.prepare("SELECT name FROM pragma_table_info('members')").all().map((c) => c.name);
+  if (columns.includes("tailscale_login")) {
+    // Lower-cased like Cloudflare emails, so a Google login keeps its member when moving over
+    db.exec("ALTER TABLE members RENAME COLUMN tailscale_login TO login; UPDATE members SET login = lower(login);");
+  }
 
   const insertMember = db.prepare("INSERT OR IGNORE INTO members (name, active) VALUES (?, ?)");
   for (const name of ACTIVE_MEMBERS) insertMember.run(name, 1);

@@ -35,6 +35,10 @@ DB_PATH=$DB_FILE
 STATIC_DIR=$APP_DIR/dist
 # Optional. Without it, search uses Open Library.
 GOOGLE_BOOKS_API_KEY=
+# Sign in through Cloudflare Access: Zero Trust team name and the Access app's AUD tag.
+# Leave empty to sign in through the bookclub Tailscale node instead.
+ACCESS_TEAM=
+ACCESS_AUD=
 EOF
   sudo chmod 640 "$ENV_FILE"
   sudo chown root:bookclub "$ENV_FILE"
@@ -61,6 +65,13 @@ for _ in $(seq 1 20); do
   sleep 0.5
 done
 curl -fsS "http://127.0.0.1:$PORT/api/me" >/dev/null || { sudo journalctl -u bookclub -n 30 --no-pager; exit 1; }
+
+# Behind Cloudflare Access the Pi's Cloudflare Tunnel is the way in, so no Tailscale node is needed
+if sudo grep -q '^ACCESS_TEAM=.' "$ENV_FILE"; then
+  sudo rm -rf "$APP_DIR.old"
+  echo "Book club is running behind Cloudflare Access (see the README for the address)."
+  exit 0
+fi
 
 # The book club has its own Tailscale node, "bookclub", running next to the main one
 TS_BOOKCLUB="sudo tailscale --socket=/run/tailscale-bookclub/tailscaled.sock"
