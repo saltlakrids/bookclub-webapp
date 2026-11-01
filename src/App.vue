@@ -1,5 +1,5 @@
 <template>
-  <nav class="navAnimation">
+  <nav :class="introNav ? 'navAnimation' : 'navShown'">
     <router-link to="/pick">Pick Book</router-link> |
     <router-link to="/search">Add Book</router-link> |
     <!-- <router-link to="/add">Add Book</router-link> | -->
@@ -25,6 +25,10 @@ export default {
   data() {
     return {
       session,
+      // The flying menu is the start page's intro. Opened anywhere else (a notification,
+      // a home screen app resuming), the menu must be there at once.
+      introNav:
+        ["", "#/"].includes(window.location.hash) && !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     };
   },
   created() {
@@ -165,6 +169,10 @@ nav a.router-link-exact-active {
   text-decoration: none;
   z-index: 2;
   position: relative;
+}
+
+.navShown {
+  visibility: visible;
 }
 
 .navAnimation {
