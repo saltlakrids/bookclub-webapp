@@ -1,5 +1,5 @@
 <template>
-  <nav :class="introNav ? 'navAnimation' : 'navShown'">
+  <nav>
     <router-link to="/pick">Pick Book</router-link> |
     <router-link to="/search">Add Book</router-link> |
     <!-- <router-link to="/add">Add Book</router-link> | -->
@@ -25,10 +25,6 @@ export default {
   data() {
     return {
       session,
-      // The flying menu is the start page's intro. Opened anywhere else (a notification,
-      // a home screen app resuming), the menu must be there at once.
-      introNav:
-        ["", "#/"].includes(window.location.hash) && !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
     };
   },
   created() {
@@ -49,7 +45,7 @@ body, html {
 }
 
 
-/* The spinning intros stick out past the edges for a moment; on Windows that flashed
+/* The hat's wobble sticks out past the edges for a moment; on Windows that flashed
    scrollbars in and out and made the page jump */
 html {
   overflow-x: hidden;
@@ -152,7 +148,6 @@ body::before {
 nav {
   position: relative;
   padding: 30px;
-  visibility: hidden;
   z-index: 2;
 }
 
@@ -177,17 +172,6 @@ nav a.router-link-exact-active {
   position: relative;
 }
 
-.navShown {
-  visibility: visible;
-}
-
-.navAnimation {
-  animation: bounceInFromTop 5.5s linear both;
-  visibility: visible;
-  z-index: 2;
-  position: relative;
-}
-
 
 button {
     font-family: 'Quicksand', sans-serif;
@@ -205,19 +189,6 @@ button {
   button:hover {
     background-color: #FFC90E;
   }
-
-@keyframes bounceInFromTop {
-  0% {
-    transform: translateY(-800px) rotate(-720deg);
-    filter: blur(50px);
-    opacity: 0;
-  }
-  100% {
-    transform: translateY(0) rotate(0deg);
-    filter: blur(0);
-    opacity: 1;
-  }
-}
 
 /* @keyframes wave {
   0% {

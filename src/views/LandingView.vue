@@ -7,14 +7,6 @@
         </text>
       </svg>
     </div>
-    <h3 class="subheading subheadingAnimation">
-      Welcome to the Webapp that helps you decide what book to read next!
-    </h3>
-    <h4 class="body bodyAnimation">
-      Add your favorite books to the magic hat or let fate choose your next
-      literary adventure. Embrace the magic of the hat and pick your next great
-      book!
-    </h4>
     <img
       class="addHat hatAnimation"
       alt="The Hat"
@@ -67,7 +59,7 @@ svg {
   height: 100%;
 }
 svg text {
-  animation: stroke 3s 1 alternate;
+  animation: stroke 2s 1 alternate;
   stroke-width: 2;
   stroke: #ffc90e;
   font-size: 35px;
@@ -109,53 +101,6 @@ svg text {
   z-index: 99;
 }
 
-.subheading {
-  visibility: hidden;
-  font-family: "Quicksand", sans-serif;
-}
-
-.body {
-  visibility: hidden;
-  font-family: "Quicksand", sans-serif;
-  margin: 15px;
-}
-
-.subheadingAnimation {
-  animation: subheadingAnimation 1s cubic-bezier(0.68, -0.55, 0.27, 1.55)
-    forwards;
-  animation-delay: 2.5s;
-}
-
-.bodyAnimation {
-  animation: bodyAnimation 1s cubic-bezier(0.68, -0.55, 0.27, 1.55) forwards;
-  animation-delay: 3.5s;
-}
-
-@keyframes subheadingAnimation {
-  0% {
-    opacity: 0;
-    transform: translateY(-20px);
-    visibility: visible;
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-    visibility: visible;
-  }
-}
-
-@keyframes bodyAnimation {
-  0% {
-    opacity: 0;
-    transform: translateY(-20px);
-    visibility: visible;
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-    visibility: visible;
-  }
-}
 .addHat {
   padding-top: 40px;
   width: 390px;
@@ -164,7 +109,7 @@ svg text {
 
 .hatAnimation {
   animation: hatAnimation 1s ease-in-out forwards, wobble 1.5s infinite;
-  animation-delay: 4.5s;
+  animation-delay: 1.5s;
 }
 
 @keyframes hatAnimation {
