@@ -49,6 +49,12 @@ body, html {
 }
 
 
+/* The spinning intros stick out past the edges for a moment; on Windows that flashed
+   scrollbars in and out and made the page jump */
+html {
+  overflow-x: hidden;
+}
+
 body {
   position: relative;
   background-image: url('/src/assets/background.jpeg');
