@@ -36,6 +36,54 @@ CREATE TABLE IF NOT EXISTS ratings (
 );
 
 CREATE INDEX IF NOT EXISTS books_status ON books(status);
+
+-- How far each member is in a book. total_pages is their own edition; NULL means the book's pages.
+CREATE TABLE IF NOT EXISTS progress (
+  book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+  member_id INTEGER NOT NULL REFERENCES members(id),
+  page INTEGER NOT NULL DEFAULT 0,
+  total_pages INTEGER,
+  updated_at TEXT NOT NULL,
+  PRIMARY KEY (book_id, member_id)
+);
+
+-- Every page update, for "pages this week" and "X just read N pages"
+CREATE TABLE IF NOT EXISTS progress_log (
+  id INTEGER PRIMARY KEY,
+  book_id INTEGER NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+  member_id INTEGER NOT NULL REFERENCES members(id),
+  from_page INTEGER NOT NULL,
+  to_page INTEGER NOT NULL,
+  at TEXT NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS progress_log_at ON progress_log(at);
+
+-- One row per device that turned notifications on
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+  endpoint TEXT PRIMARY KEY,
+  member_id INTEGER NOT NULL REFERENCES members(id),
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  user_agent TEXT,
+  created_at TEXT NOT NULL
+);
+
+-- What each member wants to be notified about. No row means the defaults.
+-- weekly_day: 0 = Sunday ... 6 = Saturday, NULL = no weekly status
+CREATE TABLE IF NOT EXISTS member_settings (
+  member_id INTEGER PRIMARY KEY REFERENCES members(id),
+  weekly_day INTEGER CHECK (weekly_day IS NULL OR weekly_day BETWEEN 0 AND 6),
+  weekly_hour INTEGER NOT NULL CHECK (weekly_hour BETWEEN 0 AND 23),
+  notify_progress INTEGER NOT NULL DEFAULT 0,
+  weekly_sent_at TEXT
+);
+
+-- Server state, e.g. the push signing keys
+CREATE TABLE IF NOT EXISTS settings (
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
+);
 `;
 
 export function openDb(path) {

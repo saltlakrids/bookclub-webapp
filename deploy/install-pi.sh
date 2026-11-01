@@ -22,6 +22,8 @@ sudo rm -rf "$APP_DIR.new"
 sudo mkdir -p "$APP_DIR.new"
 sudo tar -xzf "$RELEASE" -C "$APP_DIR.new"
 sudo chown -R root:root "$APP_DIR.new"
+# The server's own packages (web-push), installed fresh for the Pi
+sudo npm ci --omit=dev --no-audit --no-fund --prefix "$APP_DIR.new/server" >/dev/null
 sudo rm -rf "$APP_DIR.old"
 if [ -d "$APP_DIR" ]; then sudo mv "$APP_DIR" "$APP_DIR.old"; fi
 sudo mv "$APP_DIR.new" "$APP_DIR"

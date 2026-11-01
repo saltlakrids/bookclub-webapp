@@ -16,6 +16,11 @@ import { ACCESS_JWT_HEADER, createAccessVerifier } from "./access.js";
 import { openDb } from "./db.js";
 import { HttpError, addBook, deleteBook, listBooks, pickBook, rateBook, setBookImage, updateBook } from "./books.js";
 import { searchBooks } from "./search.js";
+import {
+  getSettings, listProgress, markWeeklySent, progressListeners, progressMessage, updateProgress, updateSettings,
+  weeklyDue, weeklyMessage,
+} from "./progress.js";
+import { createPush, deleteSubscription, notifyMember, saveSubscription } from "./push.js";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 const PORT = Number(process.env.PORT || 8100);
@@ -30,6 +35,26 @@ const verifyAccess =
     : null;
 
 const db = openDb(DB_PATH);
+// Who the push services can contact about our messages: an https URL or a mailto: address
+const push = createPush(db, process.env.PUSH_SUBJECT || "https://bookclub.karensmindevej.app");
+
+// Notifications never hold up or break the request that caused them
+function notifyLater(memberIds, message) {
+  for (const id of memberIds) {
+    notifyMember(db, push.send, id, message).catch((error) => console.error(`Notify failed: ${error.message}`));
+  }
+}
+
+async function sendWeeklyStatus() {
+  const due = weeklyDue(db);
+  if (due.length === 0) return;
+  const message = weeklyMessage(db);
+  for (const id of due) {
+    // Marked even when nothing is being read, so it's checked again next week, not every few minutes
+    markWeeklySent(db, id);
+    if (message) await notifyMember(db, push.send, id, message);
+  }
+}
 
 const MIME = {
   ".html": "text/html; charset=utf-8",
@@ -44,6 +69,7 @@ const MIME = {
   ".ico": "image/x-icon",
   ".mp3": "audio/mpeg",
   ".woff2": "font/woff2",
+  ".webmanifest": "application/manifest+json",
 };
 
 function send(res, status, body, headers = {}) {
@@ -168,6 +194,45 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, setBookImage(db, Number(imageMatch[1]), image));
   }
 
+  if (route === "GET /api/progress") {
+    return sendJson(res, 200, listProgress(db));
+  }
+
+  const progressMatch = url.pathname.match(/^\/api\/books\/(\d+)\/progress$/);
+  if (progressMatch && req.method === "PUT") {
+    const { progress, read } = updateProgress(db, Number(progressMatch[1]), me, await readJson(req));
+    if (read) notifyLater(progressListeners(db, me.id), progressMessage(read));
+    return sendJson(res, 200, progress);
+  }
+
+  if (route === "GET /api/settings") {
+    return sendJson(res, 200, getSettings(db, me.id));
+  }
+
+  if (route === "PUT /api/settings") {
+    return sendJson(res, 200, updateSettings(db, me.id, await readJson(req)));
+  }
+
+  if (route === "GET /api/push/key") {
+    return sendJson(res, 200, { publicKey: push.publicKey });
+  }
+
+  if (route === "POST /api/push/subscription") {
+    saveSubscription(db, me.id, await readJson(req), req.headers["user-agent"]);
+    return sendJson(res, 200, { ok: true });
+  }
+
+  if (route === "DELETE /api/push/subscription") {
+    const { endpoint } = await readJson(req);
+    if (typeof endpoint === "string") deleteSubscription(db, endpoint, me.id);
+    return sendJson(res, 200, { ok: true });
+  }
+
+  if (route === "POST /api/push/test") {
+    const message = { title: "Book club", body: "Notifications work on this device.", url: "/#/progress", tag: "test" };
+    return sendJson(res, 200, await notifyMember(db, push.send, me.id, message));
+  }
+
   if (route === "GET /api/search") {
     const query = (url.searchParams.get("q") || "").trim();
     if (query.length < 3) return sendJson(res, 200, []);
@@ -226,6 +291,11 @@ const server = createServer(async (req, res) => {
   }
 });
 
+// Weekly status: each member picks their own day and hour, checked every few minutes
+const weeklyTimer = setInterval(() => {
+  sendWeeklyStatus().catch((error) => console.error(`Weekly status failed: ${error.message}`));
+}, 5 * 60 * 1000);
+
 server.listen(PORT, HOST, () => {
   console.log(`Book club listening on http://${HOST}:${PORT} (db: ${DB_PATH})`);
   console.log(verifyAccess ? `Sign in: Cloudflare Access (team ${process.env.ACCESS_TEAM})` : "Sign in: Tailscale");
@@ -234,6 +304,7 @@ server.listen(PORT, HOST, () => {
 
 for (const signal of ["SIGINT", "SIGTERM"]) {
   process.on(signal, () => {
+    clearInterval(weeklyTimer);
     server.close();
     db.close();
     process.exit(0);

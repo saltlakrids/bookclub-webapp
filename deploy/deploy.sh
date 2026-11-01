@@ -11,7 +11,7 @@ if [ "${1:-}" = "--seed" ]; then SEED_DB="$2"; fi
 npm run build
 
 RELEASE=$(mktemp -d)/bookclub.tar.gz
-tar -czf "$RELEASE" dist server deploy package.json
+tar -czf "$RELEASE" --exclude=server/node_modules dist server deploy package.json
 
 ssh "$HOST" 'mkdir -p ~/bookclub-deploy'
 scp -q "$RELEASE" deploy/install-pi.sh "$HOST":bookclub-deploy/

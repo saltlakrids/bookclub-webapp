@@ -33,6 +33,13 @@ const routes = [
     component: RateBook
   },
   {
+    path: '/progress',
+    name: 'progress',
+    component: function () {
+      return import('../views/ProgressView.vue')
+    }
+  },
+  {
     path: '/me',
     name: 'me',
     component: function () {

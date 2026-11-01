@@ -3,6 +3,7 @@
     <router-link to="/pick">Pick Book</router-link> |
     <router-link to="/search">Add Book</router-link> |
     <!-- <router-link to="/add">Add Book</router-link> | -->
+    <router-link to="/progress">Progress</router-link> |
     <router-link to="/rate">Rate Book</router-link> |
     <router-link to="/me">My Books</router-link>
     <div v-if="session.member" class="signed-in">Signed in as {{ session.member.name }}</div>
