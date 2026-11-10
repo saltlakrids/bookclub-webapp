@@ -20,6 +20,22 @@ export function scores(book) {
   return (book.ratings || []).map((r) => r.score).filter((s) => typeof s === "number");
 }
 
+// Only the ratings that carry a score (skipped rows have null)
+export function ratersOf(book) {
+  return (book.ratings || []).filter((r) => typeof r.score === "number");
+}
+
+// Every finished book: the ones the member scored first (highest first), then the rest by club average
+export function myBookList(rated, member) {
+  const { top } = memberStats(rated, member);
+  const scoredIds = new Set(top.map((entry) => entry.book.id));
+  const others = rated
+    .filter((book) => !scoredIds.has(book.id))
+    .sort((a, b) => (b.average ?? -1) - (a.average ?? -1))
+    .map((book) => ({ book, score: null, skipped: scoreOf(book, member) === null }));
+  return [...top, ...others];
+}
+
 export function scoreOf(book, member) {
   const rating = (book.ratings || []).find((r) => r.member === member);
   return rating ? rating.score : undefined;
