@@ -9,7 +9,7 @@ const WEEK_MS = 7 * 24 * 3600 * 1000;
 // Updates from the same person closer together than this count as one reading session
 const SESSION_MS = 60 * 60 * 1000;
 
-export const DEFAULT_SETTINGS = { weeklyDay: 0, weeklyHour: 19, notifyProgress: false };
+export const DEFAULT_SETTINGS = { weeklyDay: 0, weeklyHour: 19, notifyProgress: false, notifyMeetups: true };
 
 function percent(page, total) {
   return total ? Math.min(100, Math.round((page / total) * 100)) : null;
@@ -146,9 +146,11 @@ export function progressMessage(read) {
 // --- Settings ---
 
 export function getSettings(db, memberId) {
-  const row = db.prepare("SELECT weekly_day, weekly_hour, notify_progress FROM member_settings WHERE member_id = ?").get(memberId);
+  const row = db.prepare("SELECT weekly_day, weekly_hour, notify_progress, notify_meetups FROM member_settings WHERE member_id = ?").get(memberId);
   if (!row) return { ...DEFAULT_SETTINGS };
-  return { weeklyDay: row.weekly_day, weeklyHour: row.weekly_hour, notifyProgress: row.notify_progress === 1 };
+  return { weeklyDay: row.weekly_day, weeklyHour: row.weekly_hour, notifyProgress: row.notify_progress === 1,
+    notifyMeetups: row.notify_meetups === 1,
+  };
 }
 
 export function updateSettings(db, memberId, body) {
@@ -169,11 +171,16 @@ export function updateSettings(db, memberId, body) {
     if (typeof body.notifyProgress !== "boolean") throw new HttpError(400, "notifyProgress must be true or false.");
     settings.notifyProgress = body.notifyProgress;
   }
+  if ("notifyMeetups" in body) {
+    if (typeof body.notifyMeetups !== "boolean") throw new HttpError(400, "notifyMeetups must be true or false.");
+    settings.notifyMeetups = body.notifyMeetups;
+  }
   db.prepare(`
-    INSERT INTO member_settings (member_id, weekly_day, weekly_hour, notify_progress) VALUES (?, ?, ?, ?)
+    INSERT INTO member_settings (member_id, weekly_day, weekly_hour, notify_progress, notify_meetups) VALUES (?, ?, ?, ?, ?)
     ON CONFLICT (member_id) DO UPDATE SET
-      weekly_day = excluded.weekly_day, weekly_hour = excluded.weekly_hour, notify_progress = excluded.notify_progress
-  `).run(memberId, settings.weeklyDay, settings.weeklyHour, settings.notifyProgress ? 1 : 0);
+      weekly_day = excluded.weekly_day, weekly_hour = excluded.weekly_hour, notify_progress = excluded.notify_progress,
+      notify_meetups = excluded.notify_meetups
+  `).run(memberId, settings.weeklyDay, settings.weeklyHour, settings.notifyProgress ? 1 : 0, settings.notifyMeetups ? 1 : 0);
   return settings;
 }
 
@@ -216,9 +223,10 @@ export function weeklyDue(db, now = new Date()) {
 export function markWeeklySent(db, memberId, now = new Date()) {
   const s = getSettings(db, memberId);
   db.prepare(`
-    INSERT INTO member_settings (member_id, weekly_day, weekly_hour, notify_progress, weekly_sent_at) VALUES (?, ?, ?, ?, ?)
+    INSERT INTO member_settings (member_id, weekly_day, weekly_hour, notify_progress, notify_meetups, weekly_sent_at)
+    VALUES (?, ?, ?, ?, ?, ?)
     ON CONFLICT (member_id) DO UPDATE SET weekly_sent_at = excluded.weekly_sent_at
-  `).run(memberId, s.weeklyDay, s.weeklyHour, s.notifyProgress ? 1 : 0, now.toISOString());
+  `).run(memberId, s.weeklyDay, s.weeklyHour, s.notifyProgress ? 1 : 0, s.notifyMeetups ? 1 : 0, now.toISOString());
 }
 
 // One line per book: everyone's percentage and pages this week. Null when nothing is being read.

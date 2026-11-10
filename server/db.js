@@ -76,8 +76,25 @@ CREATE TABLE IF NOT EXISTS member_settings (
   weekly_day INTEGER CHECK (weekly_day IS NULL OR weekly_day BETWEEN 0 AND 6),
   weekly_hour INTEGER NOT NULL CHECK (weekly_hour BETWEEN 0 AND 23),
   notify_progress INTEGER NOT NULL DEFAULT 0,
-  weekly_sent_at TEXT
+  weekly_sent_at TEXT,
+  notify_meetups INTEGER NOT NULL DEFAULT 1
 );
+
+-- Book club meetups and parties. read_to_page is the page the club reads up to before it.
+CREATE TABLE IF NOT EXISTS meetups (
+  id INTEGER PRIMARY KEY,
+  kind TEXT NOT NULL CHECK (kind IN ('meetup', 'party')),
+  starts_at TEXT NOT NULL,
+  ends_at TEXT,
+  description TEXT NOT NULL DEFAULT '',
+  book_id INTEGER REFERENCES books(id) ON DELETE SET NULL,
+  read_to_page INTEGER,
+  created_by INTEGER REFERENCES members(id),
+  created_at TEXT NOT NULL,
+  reminder_sent_at TEXT
+);
+
+CREATE INDEX IF NOT EXISTS meetups_starts_at ON meetups(starts_at);
 
 -- Server state, e.g. the push signing keys
 CREATE TABLE IF NOT EXISTS settings (
@@ -99,6 +116,11 @@ export function openDb(path) {
   if (columns.includes("tailscale_login")) {
     // Lower-cased like Cloudflare emails, so a Google login keeps its member when moving over
     db.exec("ALTER TABLE members RENAME COLUMN tailscale_login TO login; UPDATE members SET login = lower(login);");
+  }
+
+  const settingsColumns = db.prepare("SELECT name FROM pragma_table_info('member_settings')").all().map((c) => c.name);
+  if (!settingsColumns.includes("notify_meetups")) {
+    db.exec("ALTER TABLE member_settings ADD COLUMN notify_meetups INTEGER NOT NULL DEFAULT 1");
   }
 
   const insertMember = db.prepare("INSERT OR IGNORE INTO members (name, active) VALUES (?, ?)");
