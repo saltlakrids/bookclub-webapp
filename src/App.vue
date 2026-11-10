@@ -5,7 +5,8 @@
     <!-- <router-link to="/add">Add Book</router-link> | -->
     <router-link to="/progress">Progress</router-link> |
     <router-link to="/rate">Rate Book</router-link> |
-    <router-link to="/me">My Books</router-link>
+    <router-link to="/me">My Books</router-link> |
+    <router-link to="/meetups">Meetups</router-link>
     <div v-if="session.member" class="signed-in">Signed in as {{ session.member.name }}</div>
   </nav>
   <template v-if="session.loaded">
