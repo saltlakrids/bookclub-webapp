@@ -32,6 +32,11 @@ npm run import:excel -- "the slow genderneutral bookclub.xlsx" --db data/seed.db
 ```
 Add `--firestore firestore.json` (made with `node server/scripts/export-firestore.js > firestore.json`) to borrow covers from the old Firebase app.
 
+## Meetups
+The **Meetups** page shows the next meetup or party (date, time, book, the page to read up to and how far each member is), a list of later ones and the past ones. Anyone can plan, edit or delete a meetup. Times are entered in the phone's own time and stored in UTC; dates in notifications use Europe/Copenhagen.
+- **Add to calendar** links to Google Calendar, Outlook.com and Microsoft 365, and downloads an `.ics` file (`GET /api/meetups/<id>.ics`) for Apple Calendar, Outlook desktop and the rest.
+- A meetup with a page to read up to sends a push notification one week before to every member who is behind ("Read 50 pages by Friday"). Meetups planned less than a week ahead and parties get none; each member can turn it off under Notifications.
+
 ## Raspberry Pi
 First install, with the imported database:
 ```
