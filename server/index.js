@@ -20,6 +20,9 @@ import {
   getSettings, listProgress, markWeeklySent, progressListeners, progressMessage, updateProgress, updateSettings,
   weeklyDue, weeklyMessage,
 } from "./progress.js";
+import {
+  addMeetup, deleteMeetup, getMeetup, listMeetups, markReminderSent, meetupIcs, meetupReminder, meetupRemindersDue, updateMeetup,
+} from "./meetups.js";
 import { createPush, deleteSubscription, notifyMember, saveSubscription } from "./push.js";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
@@ -53,6 +56,17 @@ async function sendWeeklyStatus() {
     // Marked even when nothing is being read, so it's checked again next week, not every few minutes
     markWeeklySent(db, id);
     if (message) await notifyMember(db, push.send, id, message);
+  }
+}
+
+// A week before a meetup with a page target, tell the members who are behind (once per meetup)
+async function sendMeetupReminders() {
+  for (const meetup of meetupRemindersDue(db)) {
+    markReminderSent(db, meetup.id);
+    for (const member of db.prepare("SELECT id, name FROM members WHERE active = 1").all()) {
+      const message = meetupReminder(db, meetup, member);
+      if (message) await notifyMember(db, push.send, member.id, message);
+    }
   }
 }
 
@@ -205,6 +219,32 @@ async function handleApi(req, res, url) {
     return sendJson(res, 200, progress);
   }
 
+  if (route === "GET /api/meetups") {
+    return sendJson(res, 200, listMeetups(db, me));
+  }
+
+  if (route === "POST /api/meetups") {
+    return sendJson(res, 201, addMeetup(db, me, await readJson(req)));
+  }
+
+  const icsMatch = url.pathname.match(/^\/api\/meetups\/(\d+)\.ics$/);
+  if (icsMatch && req.method === "GET") {
+    const meetup = getMeetup(db, Number(icsMatch[1]));
+    return send(res, 200, meetupIcs(meetup), {
+      "Content-Type": "text/calendar; charset=utf-8",
+      "Content-Disposition": `attachment; filename="bookclub-meetup-${meetup.id}.ics"`,
+      "Cache-Control": "no-store",
+    });
+  }
+
+  const meetupMatch = url.pathname.match(/^\/api\/meetups\/(\d+)$/);
+  if (meetupMatch && req.method === "PUT") {
+    return sendJson(res, 200, updateMeetup(db, Number(meetupMatch[1]), await readJson(req)));
+  }
+  if (meetupMatch && req.method === "DELETE") {
+    return sendJson(res, 200, deleteMeetup(db, Number(meetupMatch[1])));
+  }
+
   if (route === "GET /api/settings") {
     return sendJson(res, 200, getSettings(db, me.id));
   }
@@ -291,9 +331,10 @@ const server = createServer(async (req, res) => {
   }
 });
 
-// Weekly status: each member picks their own day and hour, checked every few minutes
+// Weekly status and meetup reminders: each member picks their own day and hour, checked every few minutes
 const weeklyTimer = setInterval(() => {
   sendWeeklyStatus().catch((error) => console.error(`Weekly status failed: ${error.message}`));
+  sendMeetupReminders().catch((error) => console.error(`Meetup reminders failed: ${error.message}`));
 }, 5 * 60 * 1000);
 
 server.listen(PORT, HOST, () => {

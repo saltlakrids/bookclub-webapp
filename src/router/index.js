@@ -45,6 +45,13 @@ const routes = [
     component: function () {
       return import('../views/MyBooksView.vue')
     }
+  },
+  {
+    path: '/meetups',
+    name: 'meetups',
+    component: function () {
+      return import('../views/MeetupsView.vue')
+    }
   }
 ]
 

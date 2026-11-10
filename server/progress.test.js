@@ -65,7 +65,7 @@ test("bad progress is refused", () => {
 
 test("progress notifications are off by default and only go to others", () => {
   const { db, frederik, oscar } = club();
-  assert.deepEqual(getSettings(db, oscar.id), { weeklyDay: 0, weeklyHour: 19, notifyProgress: false });
+  assert.deepEqual(getSettings(db, oscar.id), { weeklyDay: 0, weeklyHour: 19, notifyProgress: false, notifyMeetups: true });
   assert.deepEqual(progressListeners(db, frederik.id), []);
   updateSettings(db, oscar.id, { notifyProgress: true });
   updateSettings(db, frederik.id, { notifyProgress: true });

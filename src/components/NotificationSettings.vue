@@ -38,6 +38,10 @@
         <input type="checkbox" :checked="settings.notifyProgress" @change="save({ notifyProgress: $event.target.checked })" />
         When someone else updates their progress
       </label>
+      <label class="switch-row">
+        <input type="checkbox" :checked="settings.notifyMeetups" @change="save({ notifyMeetups: $event.target.checked })" />
+        A week before a meetup, if I'm behind on the reading
+      </label>
       <p class="note small">These settings follow you to every device with notifications on.</p>
     </template>
 
