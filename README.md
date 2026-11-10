@@ -41,6 +41,7 @@ Later updates:
 ```
 deploy/deploy.sh
 ```
+On the Pi itself, from a checkout of `raspberry-pi`: `sudo bash deploy/install.sh` (builds, backs up the database, installs). The Pi's task board runs this after every change it merges to `raspberry-pi`, which is the main branch for the Pi version.
 This builds the app, copies it to `homepi` (set `BOOKCLUB_HOST` to change that) and installs it:
 
 | What | Where |
