@@ -24,7 +24,7 @@
 
       <section class="panel">
         <div class="panel-head">
-          <h3>Your favourites</h3>
+          <h3>{{ showAll ? "All books" : "Your favourites" }}</h3>
           <button type="button" class="share" @click="shareTop">{{ shareLabel }}</button>
         </div>
         <ol class="ranking">
@@ -60,7 +60,7 @@
           </li>
         </ol>
         <button v-if="fullList.length > 5" type="button" class="more" @click="toggleShowAll">
-          {{ showAll ? "Show top 5" : `Show all ${fullList.length}` }}
+          {{ showAll ? "Show only favourites" : `Show all ${fullList.length}` }}
         </button>
       </section>
 
