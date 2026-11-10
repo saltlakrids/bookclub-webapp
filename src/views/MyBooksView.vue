@@ -24,25 +24,43 @@
 
       <section class="panel">
         <div class="panel-head">
-          <h3>Your favourites</h3>
+          <h3>{{ showAll ? "All books" : "Your favourites" }}</h3>
           <button type="button" class="share" @click="shareTop">{{ shareLabel }}</button>
         </div>
         <ol class="ranking">
-          <li v-for="(entry, index) in topList" :key="entry.book.id" class="ranking-row">
-            <span class="rank">{{ index + 1 }}</span>
-            <BookCover :book="entry.book" size="small" />
-            <div class="ranking-text">
-              <div class="ranking-title">{{ entry.book.title }}</div>
-              <div class="ranking-meta">
-                Club {{ entry.book.average === null ? "–" : entry.book.average.toFixed(1) }}
-                <template v-if="entry.book.suggester"> · suggested by {{ entry.book.suggester }}</template>
+          <li v-for="(entry, index) in topList" :key="entry.book.id" class="ranking-item" :class="{ open: openId === entry.book.id }">
+            <div
+              class="ranking-row"
+              role="button"
+              tabindex="0"
+              :aria-expanded="openId === entry.book.id ? 'true' : 'false'"
+              @click="toggleOpen(entry.book.id)"
+              @keydown.enter.prevent="toggleOpen(entry.book.id)"
+              @keydown.space.prevent="toggleOpen(entry.book.id)"
+            >
+              <span class="rank">{{ entry.score === null ? "" : index + 1 }}</span>
+              <BookCover :book="entry.book" size="small" />
+              <div class="ranking-text">
+                <div class="ranking-title">{{ entry.book.title }}</div>
+                <div class="ranking-meta">
+                  Club {{ entry.book.average === null ? "–" : entry.book.average.toFixed(1) }}
+                  <template v-if="entry.book.suggester"> · suggested by {{ entry.book.suggester }}</template>
+                </div>
               </div>
+              <span v-if="entry.score === null" class="ranking-unread">{{ entry.skipped ? "skipped" : "not read" }}</span>
+              <span v-else class="ranking-score">{{ entry.score }}</span>
             </div>
-            <span class="ranking-score">{{ entry.score }}</span>
+            <div v-if="openId === entry.book.id" class="others">
+              <div v-for="rating in othersOf(entry.book)" :key="rating.member" class="other-row">
+                <span>{{ rating.member }}</span>
+                <span>{{ rating.score }}</span>
+              </div>
+              <p v-if="!othersOf(entry.book).length" class="note small">Nobody else scored this book.</p>
+            </div>
           </li>
         </ol>
-        <button v-if="stats.top.length > 5" type="button" class="more" @click="showAll = !showAll">
-          {{ showAll ? "Show top 5" : `Show all ${stats.top.length}` }}
+        <button v-if="fullList.length > 5" type="button" class="more" @click="toggleShowAll">
+          {{ showAll ? "Show only favourites" : `Show all ${fullList.length}` }}
         </button>
       </section>
 
@@ -79,12 +97,12 @@
 import api, { session, errorMessage } from "@/api";
 import BookCover from "@/components/BookCover.vue";
 import BookDialog from "@/components/BookDialog.vue";
-import { memberStats } from "@/stats";
+import { memberStats, myBookList, ratersOf } from "@/stats";
 
 export default {
   components: { BookCover, BookDialog },
   data() {
-    return { rated: [], raters: [], loading: true, error: "", showAll: false, shareLabel: "Share top 5", manualShare: "" };
+    return { rated: [], members: [], loading: true, error: "", showAll: false, openId: null, shareLabel: "Share top 5", manualShare: "" };
   },
   computed: {
     me() {
@@ -93,11 +111,15 @@ export default {
     stats() {
       return memberStats(this.rated, this.me);
     },
-    topList() {
-      return this.showAll ? this.stats.top : this.stats.top.slice(0, 5);
+    fullList() {
+      return myBookList(this.rated, this.me);
     },
+    topList() {
+      return this.showAll ? this.fullList : this.stats.top.slice(0, 5);
+    },
+    // Active members only: former members stay in the data but not in this list
     clubMembers() {
-      return this.raters
+      return this.members
         .map((name) => ({ name, average: memberStats(this.rated, name).averageGiven }))
         .filter((m) => m.average !== null)
         .sort((a, b) => b.average - a.average);
@@ -107,7 +129,7 @@ export default {
     try {
       const { data } = await api.get("/books");
       this.rated = data.rated;
-      this.raters = data.raters;
+      this.members = data.members;
     } catch (error) {
       this.error = errorMessage(error);
     } finally {
@@ -115,6 +137,19 @@ export default {
     }
   },
   methods: {
+    toggleOpen(id) {
+      this.openId = this.openId === id ? null : id;
+    },
+    toggleShowAll() {
+      this.showAll = !this.showAll;
+      if (!this.topList.some((entry) => entry.book.id === this.openId)) this.openId = null;
+    },
+    // Everyone who scored the book, except you (your score is on the row)
+    othersOf(book) {
+      return ratersOf(book)
+        .filter((r) => r.member !== this.me)
+        .sort((a, b) => b.score - a.score);
+    },
     signed(n) {
       return `${n >= 0 ? "+" : "−"}${Math.abs(n).toFixed(1)}`;
     },
@@ -271,16 +306,64 @@ export default {
   padding: 0;
 }
 
+.ranking-item {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+
+.ranking-item:last-child {
+  border-bottom: none;
+}
+
+.ranking-item.open {
+  background: rgba(255, 255, 255, 0.07);
+}
+
 .ranking-row {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 8px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 8px 6px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: padding 0.2s, background 0.2s;
 }
 
-.ranking-row:last-child {
-  border-bottom: none;
+.ranking-item.open .ranking-row {
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.ranking-row:focus-visible {
+  outline: 2px solid #ffc90e;
+}
+
+@media (hover: hover) {
+  .ranking-row:hover {
+    background: rgba(255, 255, 255, 0.06);
+  }
+}
+
+.others {
+  padding: 0 14px 12px 38px;
+  font-size: 14px;
+}
+
+.other-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 3px 0;
+}
+
+.others .note {
+  margin: 0;
+}
+
+.ranking-unread {
+  font-size: 13px;
+  font-style: italic;
+  opacity: 0.55;
 }
 
 .rank {
@@ -292,6 +375,11 @@ export default {
 
 .ranking-row .book-cover-small {
   width: 44px;
+  transition: width 0.2s;
+}
+
+.ranking-item.open .book-cover-small {
+  width: 64px;
 }
 
 .ranking-text {

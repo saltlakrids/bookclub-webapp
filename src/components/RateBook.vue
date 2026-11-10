@@ -60,9 +60,9 @@
             <div v-if="book.finishedAt" class="book-finished">Finished {{ formatMonth(book.finishedAt) }}</div>
             <div v-if="agreementLabel(book)" class="agreement">{{ agreementLabel(book) }}</div>
             <div v-if="book.showScores" class="individual-ratings">
-              <div v-for="rating in book.ratings" :key="rating.member" class="individual-row">
+              <div v-for="rating in ratersOf(book)" :key="rating.member" class="individual-row">
                 <span>{{ rating.member }}</span>
-                <span>{{ rating.score === null ? "skipped" : rating.score }}</span>
+                <span>{{ rating.score }}</span>
               </div>
             </div>
           </template>
@@ -125,7 +125,7 @@ import BookCard from "@/components/BookCard.vue";
 import BookDialog from "@/components/BookDialog.vue";
 import BookEditor from "@/components/BookEditor.vue";
 import CoverPicker from "@/components/CoverPicker.vue";
-import { agreementLabel, clubSummary, formatDuration, readingDays, scoreOf, spread } from "@/stats";
+import { agreementLabel, clubSummary, formatDuration, ratersOf, readingDays, scoreOf, spread } from "@/stats";
 
 export default {
   components: { BookCard, BookDialog, BookEditor, CoverPicker },
@@ -160,6 +160,7 @@ export default {
     readingDays,
     formatDuration,
     agreementLabel,
+    ratersOf,
 
     daysSince(date) {
       return Math.max(1, Math.round((Date.now() - new Date(date)) / 86400000));
